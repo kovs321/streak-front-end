@@ -8,12 +8,11 @@ const searchBtn          = document.getElementById("searchBtn");
 const walletInput        = document.getElementById("walletInput");
 const leaderboardTable   = document.getElementById("leaderboard");
 const mainStreakHeading  = document.getElementById("mainStreak");
-const gotoRankBtn        = document.getElementById("gotoRankBtn");
 
 /** SolTracker API key (visible in front-end) */
-const SOLTRACKER_API_KEY = "YOUR_API_KEY_HERE"; // <-- Replace with real key
+const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc"; // <-- Replace with real key
 
-let lastWalletUsed = null; // We'll store the user’s wallet after they input it
+let lastWalletUsed = null; // We'll store the user’s wallet here after they input it
 
 /*************************************************************
   1) Fetch trades from SolTracker
@@ -58,8 +57,8 @@ function parseTrade(trade) {
     return { action: "skip" };
   }
 
-  // SOL => SPL => buy
   if (fromIsSol && !toIsSol) {
+    // SOL => SPL => "buy"
     return {
       action: "buy",
       tokenMint: toAddr,
@@ -68,7 +67,7 @@ function parseTrade(trade) {
       time,
     };
   } else {
-    // SPL => SOL => sell
+    // SPL => SOL => "sell"
     return {
       action: "sell",
       tokenMint: fromAddr,
@@ -83,7 +82,7 @@ function parseTrade(trade) {
   4) Data structure for each token’s buy->sell cycle
 *************************************************************/
 function createLedger() {
-  // ledger[mint] = { netTokenHolding, totalBoughtSol, totalProceedsSol, completedTrades: [] }
+  // ledger[mint] = { netTokenHolding, totalBoughtSol, totalProceedsSol, completedTrades:[] }
   return {};
 }
 
@@ -118,8 +117,8 @@ function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
   obj.netTokenHolding  -= amtToSell;
   obj.totalProceedsSol += proceedsSol;
 
-  // finalize cycle if netTokenHolding < ~0
   if (obj.netTokenHolding < 0.0000001) {
+    // finalize 1 cycle
     const netProfit = obj.totalProceedsSol - obj.totalBoughtSol;
     obj.completedTrades.push({ closeTime: time, netProfit });
 
@@ -131,7 +130,7 @@ function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
 }
 
 /*************************************************************
-  7) processTradesByFullCycles => returns { maxStreak, winRate, ...}
+  7) processTradesByFullCycles => returns { maxStreak, allCompleted }
 *************************************************************/
 function processTradesByFullCycles(rawTrades) {
   rawTrades.sort((a, b) => a.time - b.time);
@@ -140,6 +139,7 @@ function processTradesByFullCycles(rawTrades) {
   for (const t of rawTrades) {
     const info = parseTrade(t);
     if (info.action === "skip") continue;
+
     if (info.action === "buy") {
       handleBuy(ledger, info.tokenMint, info.tokenAmt, info.costSol);
     } else if (info.action === "sell") {
@@ -149,48 +149,34 @@ function processTradesByFullCycles(rawTrades) {
 
   // gather all completed trades across tokens
   let allCompleted = [];
-  for (const mint in ledger) {
+  for (const mint of Object.keys(ledger)) {
     allCompleted.push(...ledger[mint].completedTrades);
   }
+  // sort by closeTime ascending
   allCompleted.sort((a, b) => a.closeTime - b.closeTime);
 
+  // consecutive wins => maxStreak
   let current = 0;
   let maxStreak = 0;
-  let totalTrades = 0;
-  let totalWins = 0;
-
   for (const c of allCompleted) {
-    totalTrades++;
     if (c.netProfit > 0) {
-      totalWins++;
       current++;
-      maxStreak = Math.max(maxStreak, current);
+      if (current > maxStreak) {
+        maxStreak = current;
+      }
     } else {
       current = 0;
     }
   }
 
-  // Compute winRate
-  let winRate = 0;
-  if (totalTrades > 0) {
-    winRate = (totalWins / totalTrades) * 100; 
-  }
-
-  return {
-    maxStreak,
-    allCompleted,
-    winRate,
-    totalTrades,
-    totalWins
-  };
+  return { maxStreak, allCompleted };
 }
 
 /*************************************************************
   8) Show final row (just for immediate user feedback)
 *************************************************************/
 function showSingleRow(wallet, bestStreak) {
-  // Clear existing placeholders
-  leaderboardTable.innerHTML = "";
+  leaderboardTable.innerHTML = ""; // Clear existing placeholders
 
   const row = document.createElement("div");
   row.classList.add("leaderboard-row");
@@ -244,20 +230,16 @@ searchBtn.addEventListener("click", async () => {
     // 2) Fetch trades
     const rawTrades = await fetchWalletTrades(wallet);
 
-    // 3) Compute streak & winRate
-    const { maxStreak: computedStreak, winRate } = processTradesByFullCycles(rawTrades);
+    // 3) Compute streak
+    const { maxStreak: computedStreak } = processTradesByFullCycles(rawTrades);
     maxStreak = computedStreak;
-    console.log("Computed winRate:", winRate);
 
     // 4) Post to DB & fetch entire leaderboard
     lastWalletUsed = wallet;
-    // If you also want to store the winRate in the DB, 
-    // you must pass it to postToLeaderboard and handle it on the server:
-    // await postToLeaderboard(wallet, maxStreak, winRate);
     await postToLeaderboard(wallet, maxStreak);
     await fetchAndRenderLeaderboard();
 
-    // 5) Wait at least 3s total
+    // 5) Wait at least 3 seconds total
     const elapsed = Date.now() - startTime;
     const minLoading = 3000;
     if (elapsed < minLoading) {
@@ -321,12 +303,12 @@ function hideLoadingOverlay() {
 }
 
 /*************************************************************
-  POST => your deployed server
+  POST => deployed server
 *************************************************************/
 async function postToLeaderboard(wallet, streak) {
   try {
     const body = { wallet, streak };
-    const response = await fetch("https://YOUR_DEPLOYED_BACKEND_URL/leaderboard", {
+    const response = await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -343,7 +325,7 @@ async function postToLeaderboard(wallet, streak) {
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
-    const res = await fetch("https://YOUR_DEPLOYED_BACKEND_URL/leaderboard");
+    const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     const data = await res.json();
 
     // Clear existing
@@ -355,12 +337,10 @@ async function fetchAndRenderLeaderboard() {
       const divRow = document.createElement("div");
       divRow.classList.add("leaderboard-row");
 
-      // rank
       const rankDiv = document.createElement("div");
       rankDiv.classList.add("rank");
       rankDiv.innerText = rankIndex;
 
-      // user
       const userDiv = document.createElement("div");
       userDiv.classList.add("user");
       const link = document.createElement("a");
@@ -370,33 +350,21 @@ async function fetchAndRenderLeaderboard() {
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
-      // streak
       const streakDiv = document.createElement("div");
       streakDiv.classList.add("streak");
       streakDiv.innerText = rowData.streak;
 
-      // (NEW) If you also have rowData.winRate from the server:
-      // create a <div> for it
-      const winRateDiv = document.createElement("div");
-      winRateDiv.classList.add("winrate");
-      winRateDiv.innerText = rowData.winRate 
-        ? rowData.winRate.toFixed(1) + "%"
-        : "--";
-
-      // Append columns in final order: rank, user, streak, winRate
       divRow.appendChild(rankDiv);
       divRow.appendChild(userDiv);
       divRow.appendChild(streakDiv);
-      divRow.appendChild(winRateDiv);
 
-      // highlight newly searched user
+      // highlight if it's the newly searched user
       if (rowData.wallet === lastWalletUsed) {
         divRow.id = "currentUserRow";
         divRow.classList.add("highlight-current-user");
       }
       leaderboardTable.appendChild(divRow);
     });
-
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
   }
@@ -405,6 +373,7 @@ async function fetchAndRenderLeaderboard() {
 /*************************************************************
   SCROLL TO CURRENT USER’S RANK
 *************************************************************/
+const gotoRankBtn = document.getElementById("gotoRankBtn");
 gotoRankBtn.addEventListener("click", () => {
   const userRow = document.getElementById("currentUserRow");
   if (userRow) {
@@ -420,3 +389,5 @@ gotoRankBtn.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   fetchAndRenderLeaderboard();
 });
+
+
