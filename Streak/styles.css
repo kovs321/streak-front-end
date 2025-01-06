@@ -159,7 +159,7 @@ body {
 .leaderboard-row {
   display: grid;
   /* rank, user, streak => 3 columns */
-  grid-template-columns: 50px 2fr 1fr;
+  grid-template-columns: 50px 2fr 1fr 1fr;
   align-items: center;
   background-color: #2a2a2a; 
   padding: 0.75rem 1rem;
@@ -379,3 +379,8 @@ body {
 
 
 
+/* Possibly give .winrate a different color (similar to .streak) */
+.leaderboard-row:not(.heading) .winrate {
+  color: #ff9f1c; /* an orange color, for example */
+  font-weight: bold;
+}
