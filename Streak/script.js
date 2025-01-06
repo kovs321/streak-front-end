@@ -331,10 +331,13 @@ searchBtn.addEventListener("click", async () => {
 /*************************************************************
   10) POST to local backend server
 *************************************************************/
+/*************************************************************
+  POST to your deployed back-end
+*************************************************************/
 async function postToLeaderboard(wallet, streak) {
   try {
     const body = { wallet, streak };
-    const response = await fetch("http://localhost:3000/leaderboard", {
+    const response = await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -346,31 +349,34 @@ async function postToLeaderboard(wallet, streak) {
   }
 }
 
-
-
+/*************************************************************
+  FETCH & RENDER the entire leaderboard
+*************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
-    const res = await fetch("http://localhost:3000/leaderboard");
+    const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     const data = await res.json();
 
-    // Clear existing
+    // Clear existing entries in the table
     leaderboardTable.innerHTML = "";
 
     data.forEach((rowData, index) => {
-      const rankIndex = index + 1; 
-      // create row
+      const rankIndex = index + 1;
+
+      // create a row
       const divRow = document.createElement("div");
       divRow.classList.add("leaderboard-row");
 
-      // rank
+      // rank cell
       const rankDiv = document.createElement("div");
       rankDiv.classList.add("rank");
       rankDiv.innerText = rankIndex;
 
-      // user
+      // user cell
       const userDiv = document.createElement("div");
       userDiv.classList.add("user");
 
+      // link for user’s wallet
       const link = document.createElement("a");
       link.href = `https://solscan.io/account/${rowData.wallet}`;
       link.target = "_blank";
@@ -378,19 +384,19 @@ async function fetchAndRenderLeaderboard() {
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
-      // streak
+      // streak cell
       const streakDiv = document.createElement("div");
       streakDiv.classList.add("streak");
       streakDiv.innerText = rowData.streak;
 
-      // Append rank, user, streak
+      // append cells to row
       divRow.appendChild(rankDiv);
       divRow.appendChild(userDiv);
       divRow.appendChild(streakDiv);
 
-      // If this row’s wallet matches lastWalletUsed, give an ID for scrolling
+      // if wallet is the one just searched, highlight row
       if (rowData.wallet === lastWalletUsed) {
-        divRow.id = "currentUserRow"; 
+        divRow.id = "currentUserRow";
         divRow.classList.add("highlight-current-user");
       }
 
@@ -402,8 +408,9 @@ async function fetchAndRenderLeaderboard() {
   }
 }
 
-
-
+/*************************************************************
+  SCROLL TO CURRENT USER’S RANK
+*************************************************************/
 const gotoRankBtn = document.getElementById("gotoRankBtn");
 gotoRankBtn.addEventListener("click", () => {
   const userRow = document.getElementById("currentUserRow");
