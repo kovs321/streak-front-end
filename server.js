@@ -19,52 +19,56 @@ const db = new sqlite3.Database('streak.db', (err) => {
   else console.log("SQLite DB connected.");
 });
 
-// Create table if it doesn’t exist
+// CREATE/UPDATE TABLE to add 'winRate'
 db.run(`
   CREATE TABLE IF NOT EXISTS leaderboard (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     wallet TEXT UNIQUE,
     streak INTEGER DEFAULT 0,
+    winRate REAL DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
-// POST /leaderboard => upsert wallet & streak
+
+
 app.post('/leaderboard', (req, res) => {
-  // 2) LOG WHEN /leaderboard IS CALLED
   console.log("POST /leaderboard called with body:", req.body);
 
-  const { wallet, streak } = req.body;
+  // ADD this:
+  const { wallet, streak, winRate } = req.body; // or rename to winRate if you prefer
+
   if (!wallet) {
     return res.status(400).json({ error: "Missing wallet" });
   }
 
-  // Insert or update
+  // Insert or update => include 'winRate' in both the columns and ON CONFLICT
   const sql = `
-    INSERT INTO leaderboard (wallet, streak)
-    VALUES (?, ?)
-    ON CONFLICT(wallet) DO UPDATE
-      SET streak=excluded.streak,
-          updated_at=CURRENT_TIMESTAMP
-  `;
-  db.run(sql, [wallet, streak || 0], function(err) {
+  INSERT INTO leaderboard (wallet, streak, winRate)
+  VALUES (?, ?, ?)
+  ON CONFLICT(wallet) DO UPDATE
+    SET streak=excluded.streak,
+        winRate=excluded.winRate,
+        updated_at=CURRENT_TIMESTAMP
+`;
+
+  // pass [wallet, streak||0, winRate||0] to handle undefined
+  db.run(sql, [wallet, streak || 0, winRate || 0], function(err) {
     if (err) {
       console.error("DB insert/update error:", err);
       return res.status(500).json({ error: "Database error" });
     }
-
-    // 3) LOG WHEN THE DB OPERATION IS COMPLETED
-    console.log(`Upsert done for wallet: ${wallet}, new streak: ${streak}`);
-
-    return res.json({ message: "Leaderboard updated", wallet, streak });
+    console.log(`Upsert done for wallet: ${wallet}, streak: ${streak}, winRate: ${winRate}`);
+    return res.json({ message: "Leaderboard updated", wallet, streak, winRate });
   });
 });
+
 
 // GET /leaderboard => return top 50, sorted by streak desc
 app.get('/leaderboard', (req, res) => {
   console.log("GET /leaderboard called");
   const sql = `
-    SELECT wallet, streak, updated_at
+    SELECT wallet, streak, winRate, updated_at
     FROM leaderboard
     ORDER BY streak DESC, updated_at DESC
     LIMIT 50
