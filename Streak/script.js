@@ -337,7 +337,7 @@ searchBtn.addEventListener("click", async () => {
 async function postToLeaderboard(wallet, streak) {
   try {
     const body = { wallet, streak };
-    const response = await fetch("streak-front-end-production.up.railway.app/leaderboard", {
+    const response = await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -354,7 +354,7 @@ async function postToLeaderboard(wallet, streak) {
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
-    const res = await fetch("streak-front-end-production.up.railway.app/leaderbaord");
+    const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     const data = await res.json();
 
     // Clear existing entries in the table
