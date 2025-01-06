@@ -420,3 +420,6 @@ gotoRankBtn.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   fetchAndRenderLeaderboard();
 });
+
+
+
