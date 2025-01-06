@@ -91,10 +91,3 @@ app.listen(PORT, () => {
 
 
 
-// TEMP route to drop the table
-app.get('/debug-drop', (req, res) => {
-  db.run("DROP TABLE IF EXISTS leaderboard", (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: "Dropped leaderboard table. Restart your server now!" });
-  });
-});
