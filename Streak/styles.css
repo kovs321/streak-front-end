@@ -385,3 +385,28 @@ body {
   color: #00ffa2; /* an orange color, for example */
   font-weight: bold;
 }
+
+
+
+
+
+/* Re-use your existing .overlay so it’s 100vw x 100vh, centered, etc. */
+
+/* Then add your custom box styling */
+.welcome-box {
+  width: 320px;  /* Adjust as desired */
+  height: 180px; /* Adjust as desired */
+  background-color: #5659e4;
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  text-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+
