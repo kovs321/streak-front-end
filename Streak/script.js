@@ -147,29 +147,43 @@ function processTradesByFullCycles(rawTrades) {
     }
   }
 
-  // gather all completed trades across tokens
+  // gather all completed trades
   let allCompleted = [];
-  for (const mint of Object.keys(ledger)) {
+  for (const mint in ledger) {
     allCompleted.push(...ledger[mint].completedTrades);
   }
-  // sort by closeTime ascending
   allCompleted.sort((a, b) => a.closeTime - b.closeTime);
 
-  // consecutive wins => maxStreak
   let current = 0;
   let maxStreak = 0;
+  let totalTrades = 0;
+  let totalWins = 0;
+
   for (const c of allCompleted) {
+    totalTrades++;
     if (c.netProfit > 0) {
+      totalWins++;
       current++;
-      if (current > maxStreak) {
-        maxStreak = current;
-      }
+      maxStreak = Math.max(maxStreak, current);
     } else {
       current = 0;
     }
   }
 
-  return { maxStreak, allCompleted };
+  // Compute winRate
+  let winRate = 0;
+  if (totalTrades > 0) {
+    winRate = (totalWins / totalTrades) * 100; 
+    // e.g. 66.7 => means 66.7%
+  }
+
+  return {
+    maxStreak,
+    allCompleted,
+    winRate,
+    totalTrades,
+    totalWins,
+  };
 }
 
 /*************************************************************
@@ -217,27 +231,33 @@ searchBtn.addEventListener("click", async () => {
     return;
   }
 
-  // Mark the start time
-  const startTime = Date.now();
+// Mark the start time
+const startTime = Date.now();
 
-  // 1) Show overlay
-  showLoadingOverlay();
-  // Show "Streak: ..." while loading
-  mainStreakHeading.innerText = "Streak: ...";
+// 1) Show overlay
+showLoadingOverlay();
+// Show "Streak: ..." while loading
+mainStreakHeading.innerText = "Streak: ...";
 
-  let maxStreak = 0;
-  try {
-    // 2) Fetch trades
-    const rawTrades = await fetchWalletTrades(wallet);
+let maxStreak = 0;
+try {
+  // 2) Fetch trades
+  const rawTrades = await fetchWalletTrades(wallet);
 
-    // 3) Compute streak
-    const { maxStreak: computedStreak } = processTradesByFullCycles(rawTrades);
-    maxStreak = computedStreak;
+  // 3) Compute streak & winRate
+  const { maxStreak: computedStreak, winRate } = processTradesByFullCycles(rawTrades);
+  maxStreak = computedStreak;
 
-    // 4) Post to DB & fetch entire leaderboard
-    lastWalletUsed = wallet;
-    await postToLeaderboard(wallet, maxStreak);
-    await fetchAndRenderLeaderboard();
+  // (Optional) Log or store the winRate
+  console.log("Computed winRate:", winRate);
+
+  // 4) Post to DB & fetch entire leaderboard
+  lastWalletUsed = wallet;
+  // If your postToLeaderboard can handle winRate, pass it in:
+  // await postToLeaderboard(wallet, maxStreak, winRate);
+  await postToLeaderboard(wallet, maxStreak);
+  
+  await fetchAndRenderLeaderboard();
 
     // 5) Wait at least 3 seconds total
     const elapsed = Date.now() - startTime;
@@ -391,3 +411,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 
+// existing code
+const streakDiv = document.createElement("div");
+streakDiv.classList.add("streak");
+streakDiv.innerText = rowData.streak;
+
+// new code: create a new div for winRate
+const winRateDiv = document.createElement("div");
+winRateDiv.classList.add("winrate");
+
+// If your server returns something like rowData.winRate:
+// (e.g. 66.7 meaning 66.7%)
+// or if the server returns null/undefined, fallback to "--"
+winRateDiv.innerText = rowData.winRate
+  ? rowData.winRate.toFixed(1) + "%"
+  : "--";
+
+// Then append everything in the order of columns
+divRow.appendChild(rankDiv);
+divRow.appendChild(userDiv);
+divRow.appendChild(streakDiv);
+divRow.appendChild(winRateDiv); // new column for Win%
