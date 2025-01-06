@@ -423,8 +423,4 @@ gotoRankBtn.addEventListener("click", () => {
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  // As soon as the DOM is ready, fetch & render the leaderboard.
-  fetchAndRenderLeaderboard();
-});
 
