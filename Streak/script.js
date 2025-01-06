@@ -12,13 +12,7 @@ const mainStreakHeading  = document.getElementById("mainStreak");
 /** SolTracker API key (visible in front-end) */
 const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc"; // <-- Replace with real key
 
-
-
-
-
 let lastWalletUsed = null; // We'll store the user’s wallet here after they input it
-
-
 
 /*************************************************************
   1) Fetch trades from SolTracker
@@ -182,10 +176,8 @@ function processTradesByFullCycles(rawTrades) {
   8) Show final row (just for immediate user feedback)
 *************************************************************/
 function showSingleRow(wallet, bestStreak) {
-  // Clear existing placeholders
-  leaderboardTable.innerHTML = "";
+  leaderboardTable.innerHTML = ""; // Clear existing placeholders
 
-  // Create one new row
   const row = document.createElement("div");
   row.classList.add("leaderboard-row");
 
@@ -194,18 +186,15 @@ function showSingleRow(wallet, bestStreak) {
   rankDiv.innerText = "?";
 
   const userDiv = document.createElement("div");
-userDiv.classList.add("user");
+  userDiv.classList.add("user");
 
-// Create <a> link
-const link = document.createElement("a");
-link.href = `https://solscan.io/account/${wallet}`;
-link.target = "_blank"; 
-link.rel = "noopener noreferrer";
-link.innerText = wallet;
-
-// Put the link inside userDiv
-userDiv.appendChild(link);
-
+  // Link to solscan
+  const link = document.createElement("a");
+  link.href = `https://solscan.io/account/${wallet}`;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.innerText = wallet;
+  userDiv.appendChild(link);
 
   const streakDiv = document.createElement("div");
   streakDiv.classList.add("streak");
@@ -219,16 +208,64 @@ userDiv.appendChild(link);
 }
 
 /*************************************************************
-  9) MAIN: on search click => immediate fetch + show
+  9) MAIN: on search click => fetch, compute, post, fetch leaderboard
 *************************************************************/
+searchBtn.addEventListener("click", async () => {
+  const wallet = walletInput.value.trim();
+  if (!wallet) {
+    console.error("No wallet address provided.");
+    return;
+  }
 
+  // Mark the start time
+  const startTime = Date.now();
+
+  // 1) Show overlay
+  showLoadingOverlay();
+  // Show "Streak: ..." while loading
+  mainStreakHeading.innerText = "Streak: ...";
+
+  let maxStreak = 0;
+  try {
+    // 2) Fetch trades
+    const rawTrades = await fetchWalletTrades(wallet);
+
+    // 3) Compute streak
+    const { maxStreak: computedStreak } = processTradesByFullCycles(rawTrades);
+    maxStreak = computedStreak;
+
+    // 4) Post to DB & fetch entire leaderboard
+    lastWalletUsed = wallet;
+    await postToLeaderboard(wallet, maxStreak);
+    await fetchAndRenderLeaderboard();
+
+    // 5) Wait at least 3 seconds total
+    const elapsed = Date.now() - startTime;
+    const minLoading = 3000;
+    if (elapsed < minLoading) {
+      await new Promise(resolve => setTimeout(resolve, minLoading - elapsed));
+    }
+
+    // 6) Now 3s are done, show final streak
+    mainStreakHeading.innerHTML = `Streak: <span class="myStreakValue">${maxStreak}</span>`;
+
+    // 7) Clear input
+    walletInput.value = "";
+
+  } catch (error) {
+    console.error("Could not fetch or parse trades:", error);
+    alert("Error fetching trades or computing streak!");
+  } finally {
+    // 8) Hide overlay
+    hideLoadingOverlay();
+  }
+});
 
 /*************************************************************
-  OVERLAY LOGIC (unchanged)
+  OVERLAY LOGIC
 *************************************************************/
 function showLoadingOverlay() {
-  console.log("showLoadingOverlay() called"); // <-- Debug line
-
+  console.log("showLoadingOverlay() called");
   let overlay = document.getElementById("loadingOverlay");
   if (!overlay) {
     overlay = document.createElement("div");
@@ -243,12 +280,11 @@ function showLoadingOverlay() {
     overlay.style.display = "flex";
     overlay.style.alignItems = "center";
     overlay.style.justifyContent = "center";
-  
 
     let spinner = document.createElement("div");
     spinner.innerText = "Loading...";
     spinner.style.fontSize = "2rem";
-    spinner.style.color = "#fff";    // optional: white text
+    spinner.style.color = "#fff";
     overlay.appendChild(spinner);
 
     document.body.appendChild(overlay);
@@ -267,72 +303,7 @@ function hideLoadingOverlay() {
 }
 
 /*************************************************************
-  (OPTIONAL) COMMENT OUT THE ORIGINAL SEARCH LOGIC
-*************************************************************/
-searchBtn.addEventListener("click", async () => {
-  const wallet = walletInput.value.trim();
-  if (!wallet) {
-    console.error("No wallet address provided.");
-    return;
-  }
-
-  // Mark the start time
-  const startTime = Date.now();
-
-  // 1) Show overlay
-  showLoadingOverlay();
-
-  // Temporarily set mainStreakHeading to "Streak: ..." 
-  // or you can do "Streak: (loading)"
-  mainStreakHeading.innerText = "Streak: ...";
-
-  let maxStreak = 0;
-  try {
-    // 2) Fetch trades
-    const rawTrades = await fetchWalletTrades(wallet);
-
-    // 3) Compute streak
-    const { maxStreak: computedStreak } = processTradesByFullCycles(rawTrades);
-    maxStreak = computedStreak; // store for use later
-
-    // 4) Post to DB & fetch entire leaderboard (for correct ranks)
-    lastWalletUsed = wallet;  // so we highlight user’s row
-    await postToLeaderboard(wallet, maxStreak);
-    await fetchAndRenderLeaderboard();
-
-    // 5) Enforce minimum 3s for overlay
-    const elapsed = Date.now() - startTime;
-    const minLoading = 3000; // 3 seconds
-    if (elapsed < minLoading) {
-      await new Promise(resolve => setTimeout(resolve, minLoading - elapsed));
-    }
-
-    // 6) Now 3s have passed. 
-    // Update mainStreakHeading
-    mainStreakHeading.innerText = `Streak: ${maxStreak}`;
-    mainStreakHeading.innerHTML = `Streak: <span class="myStreakValue">${maxStreak}</span>`;
-
-
-    // (Optional) Show a local row on top if you want:
-    // showSingleRow(wallet, maxStreak);
-
-    // 7) Clear input
-    walletInput.value = "";
-
-  } catch (error) {
-    console.error("Could not fetch or parse trades:", error);
-    alert("Error fetching trades or computing streak!");
-  } finally {
-    // 8) Hide overlay
-    hideLoadingOverlay();
-  }
-});
-
-/*************************************************************
-  10) POST to local backend server
-*************************************************************/
-/*************************************************************
-  POST to your deployed back-end
+  POST => deployed server
 *************************************************************/
 async function postToLeaderboard(wallet, streak) {
   try {
@@ -350,33 +321,28 @@ async function postToLeaderboard(wallet, streak) {
 }
 
 /*************************************************************
-  FETCH & RENDER the entire leaderboard
+  GET => render entire leaderboard
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
     const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     const data = await res.json();
 
-    // Clear existing entries in the table
+    // Clear existing
     leaderboardTable.innerHTML = "";
 
     data.forEach((rowData, index) => {
       const rankIndex = index + 1;
 
-      // create a row
       const divRow = document.createElement("div");
       divRow.classList.add("leaderboard-row");
 
-      // rank cell
       const rankDiv = document.createElement("div");
       rankDiv.classList.add("rank");
       rankDiv.innerText = rankIndex;
 
-      // user cell
       const userDiv = document.createElement("div");
       userDiv.classList.add("user");
-
-      // link for user’s wallet
       const link = document.createElement("a");
       link.href = `https://solscan.io/account/${rowData.wallet}`;
       link.target = "_blank";
@@ -384,25 +350,21 @@ async function fetchAndRenderLeaderboard() {
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
-      // streak cell
       const streakDiv = document.createElement("div");
       streakDiv.classList.add("streak");
       streakDiv.innerText = rowData.streak;
 
-      // append cells to row
       divRow.appendChild(rankDiv);
       divRow.appendChild(userDiv);
       divRow.appendChild(streakDiv);
 
-      // if wallet is the one just searched, highlight row
+      // highlight if it's the newly searched user
       if (rowData.wallet === lastWalletUsed) {
         divRow.id = "currentUserRow";
         divRow.classList.add("highlight-current-user");
       }
-
       leaderboardTable.appendChild(divRow);
     });
-
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
   }
@@ -417,10 +379,15 @@ gotoRankBtn.addEventListener("click", () => {
   if (userRow) {
     userRow.scrollIntoView({ behavior: "smooth", block: "center" });
   } else {
-    alert("Your rank isn't found yet. Please search or your wallet isn't on the leaderboard.");
+    alert("Your rank isn't found yet. Please search first!");
   }
 });
 
-
+/*************************************************************
+  (NEW) Load leaderboard on page load
+*************************************************************/
+document.addEventListener("DOMContentLoaded", async () => {
+  fetchAndRenderLeaderboard();
+});
 
 
