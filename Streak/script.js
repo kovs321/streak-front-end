@@ -428,6 +428,3 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchAndRenderLeaderboard();
 });
 
-await postToLeaderboard(wallet, maxStreak);
-await fetchAndRenderLeaderboard();
-
