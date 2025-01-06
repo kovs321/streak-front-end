@@ -422,22 +422,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  // 1) Show the welcome overlay immediately
-  const welcomeOverlay = document.getElementById("welcomeOverlay");
-  if (welcomeOverlay) {
-    welcomeOverlay.classList.remove("hidden"); // or set style.display = "flex"
-  }
-
-  // 2) Listen for the "OK" button
-  const closeWelcomeBtn = document.getElementById("closeWelcomeBtn");
-  if (closeWelcomeBtn) {
-    closeWelcomeBtn.addEventListener("click", () => {
-      // Hide the overlay
-      if (welcomeOverlay) {
-        welcomeOverlay.classList.add("hidden");
-        // or set welcomeOverlay.style.display = "none";
-      }
-    });
-  }
-});
