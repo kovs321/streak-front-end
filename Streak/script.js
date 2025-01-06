@@ -323,9 +323,9 @@ function hideLoadingOverlay() {
 /*************************************************************
   POST => your deployed server
 *************************************************************/
-async function postToLeaderboard(wallet, streak) {
+async function postToLeaderboard(wallet, streak, winRate) {
   try {
-    const body = { wallet, streak };
+    const body = { wallet, streak, winRate };
     const response = await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -420,6 +420,5 @@ gotoRankBtn.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   fetchAndRenderLeaderboard();
 });
-
 
 
