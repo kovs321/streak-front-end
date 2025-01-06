@@ -254,7 +254,7 @@ searchBtn.addEventListener("click", async () => {
     // If you also want to store the winRate in the DB, 
     // you must pass it to postToLeaderboard and handle it on the server:
     // await postToLeaderboard(wallet, maxStreak, winRate);
-    await postToLeaderboard(wallet, maxStreak);
+    await postToLeaderboard(wallet, maxStreak, winRate);
     await fetchAndRenderLeaderboard();
 
     // 5) Wait at least 3s total
