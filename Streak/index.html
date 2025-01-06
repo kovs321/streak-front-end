@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Streak – Check your Solana Wallet</title>
+
+  <!-- FONTS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Barriecito&display=swap" 
+    rel="stylesheet"
+  />
+  <!-- END FONTS -->
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= HEADER ================== -->
+  <header class="header">
+    
+    <!-- Logo container -->
+    <div class="logo-container">
+      <a href="https://example.com">
+        <img id='myLogo' src="3.png" alt="My Logo" class="logo" />
+      </a>
+    </div>
+
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const logoImg = document.getElementById("myLogo");
+        const originalSrc = logoImg.src;          // "logo_dark.png"
+        const hoverSrc    = "33.png";     // The lighter version
+      
+        logoImg.addEventListener("mouseover", () => {
+          logoImg.src = hoverSrc;
+        });
+        logoImg.addEventListener("mouseout", () => {
+          logoImg.src = originalSrc;
+        });
+      });
+      </script>
+
+    <!-- Twitter button container (top-right) -->
+    <div class="share-container">
+      <button id="shareTwitterBtn" class="glow-btn">
+        Twitter
+      </button>
+    </div>
+
+    <!-- Main header content: heading, subtitle, search bar -->
+    <div class="header-content">
+      <!-- Display streak as normal text initially -->
+      <h1 id="mainStreak">Streak: 0</h1>
+
+      <p>
+        Enter your Solana wallet to see your 
+        <span class="highlight-longest">longest</span>
+        <span class="highlight-profit">profit</span>
+        streak in a row!
+      </p>
+
+      <div class="search-bar">
+        <input 
+          type="text"
+          id="walletInput"
+          placeholder="Enter your wallet address..."
+        />
+        <button id="searchBtn" type="button">
+          <img 
+            src="image-removebg-preview.png" 
+            alt="Flame icon" 
+            class="flame-icon"
+          />
+        </button>
+      </div>
+    </div>
+
+  </header>
+  <!-- =============== END HEADER =============== -->
+
+  <!-- =========== LEADERBOARD SECTION ========== -->
+  <section class="leaderboard-section">
+  <div class="leaderboard-action">
+    <!-- New button to jump to rank -->
+    <button id="gotoRankBtn" style="margin-bottom: 1rem;">
+      See Rank
+    </button>
+  </div>
+
+  <h2>Leaderboard</h2>
+
+  <div class="leaderboard-row heading">
+    <div class="rank">RANK</div>
+    <div class="user">USER</div>
+    <div class="streak">STREAK</div>
+  </div>
+  <div class="leaderboard-table" id="leaderboard"></div>
+</section>
+
+  <!-- ========= END LEADERBOARD SECTION ========= -->
+
+
+<!-- Loading Overlay (initially hidden) -->
+<div id="loadingOverlay" class="overlay hidden">
+  <div class="loading-box">
+    <h2>Loading...</h2>
+    <p>Please wait while we fetch your trades.</p>
+  </div>
+</div>
+
+
+
+
+  <!-- Script at the bottom -->
+  <script src="script.js"></script>
+</body>
+</html>

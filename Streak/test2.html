@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Minimal Test 2</title>
+</head>
+<body>
+
+<h1 id="mainStreak">Streak: 0</h1>
+<p>Enter Solana wallet:</p>
+<div>
+  <input type="text" id="walletInput" placeholder="Enter wallet..."/>
+  <button id="searchBtn">Search</button>
+</div>
+
+<script>
+  document.getElementById('searchBtn').addEventListener('click', function(evt) {
+    console.log("Button clicked. Doing some logic...");
+    document.getElementById('mainStreak').innerText = "Streak: 999";
+  });
+</script>
+
+</body>
+</html>

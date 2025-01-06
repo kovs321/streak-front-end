@@ -1,0 +1,381 @@
+/* Reset / box sizing */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Body layout & font */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #222222; /* dark gray */
+  color: #eeeeee;
+  text-align: center;
+  margin: 0;
+  font-family: 'Atma', serif;
+}
+
+/* Header */
+.header {
+  position: relative;
+  width: 100%;
+  margin: 0 0 2rem 0;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+/* Container for h1, paragraph, search bar */
+.header-content {
+  margin-top: 210px;
+}
+
+/* Headings */
+.header h1 {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+.header p {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+/* ===== Search Bar ===== */
+.search-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+.search-bar input {
+  width: 350px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background-color: #181818;
+  color: #ffffff;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: #5659e4; 
+}
+
+/* Flame button (48×48) */
+.search-bar button {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 4px;
+  background-color: #5659e4;
+  color: #ffffff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.search-bar button:hover {
+  background-color: #ab9ff2;
+  transform: scale(1.05);
+}
+.flame-icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* Share container (Twitter button) */
+.share-container {
+  position: absolute;
+  top: 2rem;   
+  right: 10rem;
+  z-index: 999;
+}
+
+/* Twitter button (125×40) */
+#shareTwitterBtn {
+  width: 125px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  background-color: #5659e4;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+#shareTwitterBtn:hover {
+  background-color: #ab9ff2;
+  transform: scale(1.02);
+}
+
+/* Logo container (top-left) */
+.logo-container {
+  position: absolute;
+  top: -3rem;
+  left: 9rem;
+  z-index: 999;
+}
+
+
+.logo {
+  width: 220px; 
+  height: auto;
+}
+
+/* ===== Leaderboard section ===== */
+.leaderboard-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.leaderboard-section h2 {
+  margin-top: 0; 
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+/* The table container */
+.leaderboard-table {
+  width: 100%;
+}
+
+/* Base row style */
+.leaderboard-row {
+  display: grid;
+  /* rank, user, streak => 3 columns */
+  grid-template-columns: 50px 2fr 1fr;
+  align-items: center;
+  background-color: #2a2a2a; 
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin: 0.5rem 0; 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+}
+
+/* Heading row */
+.leaderboard-row.heading {
+  background-color: #181818; 
+  color: #777;      
+  font-weight: bold; 
+}
+
+/* Non-heading rows */
+.leaderboard-row:not(.heading) {
+  font-family: sans-serif;
+  font-weight: normal;
+  color: #eee;
+}
+.leaderboard-row:not(.heading):hover {
+  background-color: #2c2838;
+  transform: scale(1.01);
+}
+
+/* Each cell */
+.leaderboard-row div {
+  padding: 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+.leaderboard-row.heading div {
+  overflow: visible;
+  text-overflow: initial;
+  white-space: normal;
+}
+
+/* Rank column styling */
+.rank {
+  font-weight: bold;
+  color: #777; 
+}
+
+.leaderboard-row:not(.heading) .rank {
+  color: #ffffff;
+}
+
+/* Streak column color (non-heading rows) */
+.leaderboard-row:not(.heading) .streak {
+  color: #00ffa2;
+}
+
+
+
+.leaderboard-row:not(.heading) .user {
+  color: #ab9ff2;
+}
+
+/* user column color, if needed */
+.user {
+  color: #777777;
+}
+
+
+
+
+
+/* Overlay covers the entire screen */
+.overlay {
+  position: fixed;       /* stays in place even on scroll */
+  top: 0;
+  left: 0;
+  width: 100vw;         /* full screen width */
+  height: 100vh;        /* full screen height */
+  background: rgba(0, 0, 0, 0.6); /* semi-transparent black */
+  display: flex;        /* use flex to center the box */
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;        /* super high so it covers everything */
+}
+
+/* By default, we'll hide it with .hidden. 
+   We can also do .overlay:not(.hidden) if you prefer. */
+.hidden {
+  display: none; 
+}
+
+.loading-box {
+  /* Hard-set the box size. E.g. ~20% of a typical 1920px wide screen => 384px */
+  width: 320px;
+  height: 180px; /* Or whatever you prefer */
+
+  background-color: #5659e4;
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  text-align: center;
+  box-sizing: border-box;
+
+  /* Center content inside the box */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* 
+  Use a simple @media query to shrink
+  the box if the viewport is narrower than, say, 400–450px. 
+  That way it won’t be too large to fit. 
+*/
+@media (max-width: 450px) {
+  .loading-box {
+    width: 90%;       /* fallback for very narrow screens */
+    height: auto;     /* Let the text flow */
+    padding: 1rem;    /* slightly smaller padding */
+  }
+}
+
+
+/* Optional: style the text in the loading-box */
+.loading-box h2 {
+  margin-bottom: 1rem;
+  font-size: 1.6rem;
+}
+.loading-box p {
+  font-size: 1rem;
+  margin: 0.5rem 0 0;
+}
+
+
+.myStreakValue {
+  color: #00ffa2; /* or whichever color you like */
+  font-weight: bold; /* optional */
+}
+
+
+
+.highlight-longest {
+  color: #00ffa2; 
+  font-weight: bold;  /* optional */
+}
+
+.highlight-profit {
+  color: #f0ff00;
+  text-decoration: underline; /* optional */
+}
+
+
+
+.highlight-current-user {
+  background-color: #3a3f1e; /* or any color you like */
+  
+  /* A bigger, brighter glow: 
+     - The 25px is the blur radius (larger = softer/larger glow)
+     - The 10px is the spread radius (larger = extends glow outward)
+     - RGBA with a higher alpha (e.g. 0.8) makes the glow more opaque
+  */
+  box-shadow: 0 0 15px 5px rgba(0, 255, 8, 0.8); 
+
+  /* Transition for a smoother visual when row is highlighted */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+
+
+.leaderboard-row .user a {
+  color: #5659e4; /* or any color you want */
+  text-decoration: none; /* remove underline if desired */
+}
+
+/* Hover, visited, active, etc. to override default link styles */
+.leaderboard-row .user a:hover {
+  color: #ab9ff2;
+}
+
+
+
+
+
+/* Container that holds the "Go to My Rank" button */
+.leaderboard-action {
+  display: flex;
+  justify-content: flex-start; /* Align items (the button) to the left */
+  margin-bottom: 1rem;         /* optional spacing */
+}
+
+/* Duplicate the same styling as the Twitter button (#shareTwitterBtn) */
+#gotoRankBtn {
+  width: 125px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  background-color: #5659e4; /* main color */
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+#gotoRankBtn:hover {
+  background-color: #ab9ff2; /* same hover color as Twitter button */
+  transform: scale(1.02);
+}
+
+
+
+

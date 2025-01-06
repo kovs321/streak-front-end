@@ -1,0 +1,41 @@
+/* The container for all tabs */
+.tabs {
+    display: flex;            /* Use flex layout */
+    width: 100%;              /* Full width of the screen */
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+    margin: 0;                /* Remove default margins/padding */
+    padding: 0;
+    /* If you want them always visible on scroll, you can do:
+       position: sticky; top: 0; z-index: 999; 
+    */
+  }
+  
+  /* Each tab button */
+  .tab {
+    flex: 1;                  /* Each tab shares available space equally */
+    text-align: center;       /* Center the label in the tab */
+    padding: 1rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin: 0;                /* Remove default margins */
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    /* If you want them to look more like tabs,
+       you can add a hover or background color change, etc. */
+  }
+  
+  .tab:hover {
+    background-color: #e2e2e2;
+  }
+  
+  /* Active tab styling */
+  .tab.active {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-bottom: 1px solid #fff;
+    position: relative;
+    top: 1px;
+  }
+  
