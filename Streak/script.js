@@ -314,6 +314,20 @@ const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
   ...
 */
 
+
+// 1) Make sure this is in the same file as the other share logic, e.g. script.js
+// 2) Place it below the declaration of `let lastStreakForShare = 0;` but
+//    it does NOT need to be inside the existing share/canvas code blocks.
+
+document.getElementById("tweetShareBtn").addEventListener("click", () => {
+  const tweetText = encodeURIComponent(`I just reached a streak of ${lastStreakForShare}!`);
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+  window.open(twitterUrl, "_blank"); 
+});
+
+
+
+
 /*************************************************************
   1) "Open Share" button => show overlay, draw canvas
 *************************************************************/
