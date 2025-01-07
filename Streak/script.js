@@ -347,7 +347,7 @@ openShareBtn.addEventListener("click", () => {
 
 
     const x = 285; 
-    const y = 130;
+    const y = 250;
     // 4) Write the streak text
     ctx.font = "bold 80px sans-serif";
     ctx.fillStyle = "#00ffa2";
