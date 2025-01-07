@@ -14,7 +14,7 @@ const gotoRankBtn        = document.getElementById("gotoRankBtn");
 const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc"; // <-- Replace with real key
 
 let lastWalletUsed = null; // We'll store the user’s wallet after they input it
-
+let lastStreakForShare = 0;
 /*************************************************************
   1) Fetch trades from SolTracker
 *************************************************************/
@@ -297,14 +297,14 @@ searchBtn.addEventListener("click", async () => {
 /*************************************************************
   Variables for share logic
 *************************************************************/
-let lastStreakForShare = 0;
+
 
 const openShareBtn      = document.getElementById("openShareBtn");
 const shareCanvasOverlay= document.getElementById("shareCanvasOverlay");
 const shareCanvas       = document.getElementById("shareCanvas");
 const closeShareBtn     = document.getElementById("closeShareBtn");
 const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
-
+const tweetShareBtn      = document.getElementById("tweetShareBtn");
 /*************************************************************
   In your existing "search" flow, after computing maxStreak:
 *************************************************************/
@@ -340,7 +340,7 @@ openShareBtn.addEventListener("click", () => {
 
   // 2) Load your background image (e.g. "my_share_bg.png")
   const bg = new Image();
-  bg.src = "my_share_bg.png"; // adapt to your actual file path
+  bg.src = "4.jpg"; // adapt to your actual file path
   bg.onload = () => {
     // 3) Draw the background
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
