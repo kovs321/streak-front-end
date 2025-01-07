@@ -257,6 +257,15 @@ searchBtn.addEventListener("click", async () => {
     await postToLeaderboard(wallet, maxStreak, winRate);
     await fetchAndRenderLeaderboard();
 
+
+
+
+    lastStreakForShare = maxStreak; 
+
+
+
+
+
     // 5) Wait at least 3s total
     const elapsed = Date.now() - startTime;
     const minLoading = 3000;
@@ -278,6 +287,82 @@ searchBtn.addEventListener("click", async () => {
     hideLoadingOverlay();
   }
 });
+
+
+
+
+
+
+
+/*************************************************************
+  Variables for share logic
+*************************************************************/
+let lastStreakForShare = 0;
+
+const openShareBtn      = document.getElementById("openShareBtn");
+const shareCanvasOverlay= document.getElementById("shareCanvasOverlay");
+const shareCanvas       = document.getElementById("shareCanvas");
+const closeShareBtn     = document.getElementById("closeShareBtn");
+const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
+
+/*************************************************************
+  In your existing "search" flow, after computing maxStreak:
+*************************************************************/
+/*
+  ...
+  lastStreakForShare = maxStreak;
+  ...
+*/
+
+/*************************************************************
+  1) "Open Share" button => show overlay, draw canvas
+*************************************************************/
+openShareBtn.addEventListener("click", () => {
+  shareCanvasOverlay.style.display = "flex";  // or remove “hidden” class
+
+  // 1) Get canvas context & clear
+  const ctx = shareCanvas.getContext("2d");
+  ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
+
+  // 2) Load your background image (e.g. "my_share_bg.png")
+  const bg = new Image();
+  bg.src = "my_share_bg.png"; // adapt to your actual file path
+  bg.onload = () => {
+    // 3) Draw the background
+    ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
+
+    // 4) Write the streak text
+    ctx.font = "28px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(`My Streak: ${lastStreakForShare}`, 50, 100);
+
+    // If you want to also show their wallet or any other info:
+    // ctx.fillText(`Wallet: ${someWalletVar}`, 50, 150);
+  };
+});
+
+/*************************************************************
+  2) "Close" button => hide overlay
+*************************************************************/
+closeShareBtn.addEventListener("click", () => {
+  shareCanvasOverlay.style.display = "none";
+});
+
+/*************************************************************
+  3) "Download" button => let user save the image
+*************************************************************/
+downloadCanvasBtn.addEventListener("click", () => {
+  const dataURL = shareCanvas.toDataURL("image/png");
+  const link = document.createElement("a");
+  link.download = "my_streak.png";  // the file name
+  link.href = dataURL;
+  link.click(); // triggers download
+});
+
+
+
+
+
 
 /*************************************************************
   OVERLAY LOGIC
