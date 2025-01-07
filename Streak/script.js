@@ -346,7 +346,7 @@ openShareBtn.addEventListener("click", () => {
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
 
 
-    const x = 292; 
+    const x = 288; 
     const y = 270;
     // 4) Write the streak text
     ctx.font = "bold 80px sans-serif";
