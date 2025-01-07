@@ -436,3 +436,33 @@ body {
 }
 
 
+/* The same .overlay class you already have */
+#shareCanvasOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  display: none;            /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* .share-canvas-box can look similar to your loading-box */
+.share-canvas-box {
+  background-color: #2a2a2a;
+  color: #eee;
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  width: 650px;       /* a bit bigger than the canvas to allow spacing */
+  max-width: 90vw;    /* in case screen is narrow */
+}
+
+/* Canvas spacing if needed */
+#shareCanvas {
+  display: block;
+  margin: 1rem auto;
+  border: 2px solid #444; /* optional border so you can see it */
+}
