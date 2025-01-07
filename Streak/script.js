@@ -352,6 +352,7 @@ openShareBtn.addEventListener("click", () => {
     ctx.font = "bold 80px sans-serif";
     ctx.fillStyle = "#00ffa2";
     ctx.fillText(`${lastStreakForShare}`, x, y);
+    ctx.textAlign = "center"; 
 
     // If you want to also show their wallet or any other info:
     // ctx.fillText(`Wallet: ${someWalletVar}`, 50, 150);
