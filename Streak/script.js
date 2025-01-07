@@ -338,17 +338,20 @@ openShareBtn.addEventListener("click", () => {
   const ctx = shareCanvas.getContext("2d");
   ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
 
-  // 2) Load your background image (e.g. "my_share_bg.png")
+  // 2) Load your background image (e.g. "4.jpg")
   const bg = new Image();
   bg.src = "4.jpg"; // adapt to your actual file path
   bg.onload = () => {
     // 3) Draw the background
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
 
+
+    const x = 300; 
+    const y = 200;
     // 4) Write the streak text
     ctx.font = "bold 40px sans-serif";
     ctx.fillStyle = "#00ffa2";
-    ctx.fillText(`${lastStreakForShare}`, 135, 45);
+    ctx.fillText(`${lastStreakForShare}`, x, y);
 
     // If you want to also show their wallet or any other info:
     // ctx.fillText(`Wallet: ${someWalletVar}`, 50, 150);
