@@ -131,21 +131,20 @@
 </div>
 
 
-
-<!-- The overlay that holds our "share" content -->
+<!-- Overlay for the share canvas -->
 <div id="shareCanvasOverlay" class="overlay hidden">
   <div class="share-canvas-box">
-    <!-- Title or instructions -->
     <h2>Share Your Streak</h2>
-<!-- Our canvas element: we’ll draw the image + text onto this -->
-<canvas id="shareCanvas" width="600" height="400"></canvas>
 
-<!-- “Download” and “Close” buttons -->
-<button id="downloadCanvasBtn">Download Image</button>
-<button id="closeShareBtn">Close</button>
-</div>
-</div>
+    <!-- The canvas for drawing the background + text -->
+    <canvas id="shareCanvas" width="600" height="400"></canvas>
 
+    <div class="share-buttons">
+      <button id="downloadCanvasBtn">Download Image</button>
+      <button id="closeShareBtn">Close</button>
+    </div>
+  </div>
+</div>
 
 
 
