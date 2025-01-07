@@ -346,9 +346,9 @@ openShareBtn.addEventListener("click", () => {
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
 
     // 4) Write the streak text
-    ctx.font = "28px sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(`My Streak: ${lastStreakForShare}`, 50, 100);
+    ctx.font = "bold 40px sans-serif";
+    ctx.fillStyle = "#00ffa2";
+    ctx.fillText(`${lastStreakForShare}`, 135, 45);
 
     // If you want to also show their wallet or any other info:
     // ctx.fillText(`Wallet: ${someWalletVar}`, 50, 150);
