@@ -414,6 +414,23 @@ gotoRankBtn.addEventListener("click", () => {
   }
 });
 
+
+
+
+// Hide the intro overlay when "closeIntroBtn" is clicked
+const closeIntroBtn = document.getElementById("closeIntroBtn");
+closeIntroBtn.addEventListener("click", () => {
+  const introOverlay = document.getElementById("introOverlay");
+  if (introOverlay) {
+    introOverlay.style.display = "none";  // hide it
+  }
+});
+
+
+
+
+
+
 /*************************************************************
   (NEW) Load leaderboard on page load
 *************************************************************/
