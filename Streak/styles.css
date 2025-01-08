@@ -148,6 +148,7 @@ body {
   margin-bottom: 1.5rem;
   font-size: 2rem;
   font-weight: 600;
+  color: #4a88f2;
 }
 
 /* The table container */
@@ -302,7 +303,14 @@ body {
   font-weight: bold; /* optional */
 }
 
-
+/* The label “Streak:” color */
+.streakLabel {
+  color: #4a88f2;       /* your desired color */
+  /* optional: size or weight if you want to match the H1 */
+  /* font-size: 4rem; 
+     font-weight: normal;
+     margin-right: 0.25rem; */
+}
 
 .highlight-longest {
   color: #00ffa2; 

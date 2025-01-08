@@ -274,7 +274,11 @@ searchBtn.addEventListener("click", async () => {
     }
 
     // 6) Now 3s are done, show final streak
-    mainStreakHeading.innerHTML = `Streak: <span class="myStreakValue">${maxStreak}</span>`;
+    mainStreakHeading.innerHTML = `
+  <span class="streakLabel">Streak:</span>
+  <span class="myStreakValue">${maxStreak}</span>
+`;
+
 
     // 7) Clear input
     walletInput.value = "";
