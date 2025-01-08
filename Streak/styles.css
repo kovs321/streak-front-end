@@ -62,7 +62,7 @@ body {
 }
 .search-bar input:focus {
   outline: none;
-  border-color: #5659e4; 
+  border-color: #4a88f2; 
 }
 
 /* Flame button (48×48) */
@@ -71,7 +71,7 @@ body {
   height: 48px;
   border: none;
   border-radius: 4px;
-  background-color: #5659e4;
+  background-color: #4a88f2;
   color: #ffffff;
   font-size: 1.25rem;
   cursor: pointer;
@@ -103,7 +103,7 @@ body {
   height: 40px;
   border: none;
   border-radius: 4px;
-  background-color: #5659e4;
+  background-color: #4a88f2;
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
@@ -257,7 +257,7 @@ body {
   width: 320px;
   height: 180px; /* Or whatever you prefer */
 
-  background-color: #5659e4;
+  background-color: #4a88f2;
   color: #eee;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
@@ -334,7 +334,7 @@ body {
 
 
 .leaderboard-row .user a {
-  color: #5659e4; /* or any color you want */
+  color: #4a88f2; /* or any color you want */
   text-decoration: none; /* remove underline if desired */
 }
 
@@ -360,7 +360,7 @@ body {
   height: 40px;
   border: none;
   border-radius: 4px;
-  background-color: #5659e4; /* main color */
+  background-color: #4a88f2; /* main color */
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
@@ -423,7 +423,7 @@ body {
 }
 .intro-box button {
   padding: 0.75rem 1.5rem;
-  background: #5659e4;
+  background: #4a88f2;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -482,7 +482,7 @@ body {
   height: 40px;
   border: none;
   border-radius: 4px;
-  background-color: #5659e4; /* same color */
+  background-color: #4a88f2; /* same color */
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
