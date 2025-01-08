@@ -41,7 +41,7 @@ body {
 .header p {
   font-size: 1.4rem;
   margin-bottom: 1.5rem;
-  color: #ffffff;
+  color: #999999;
 }
 
 /* ===== Search Bar ===== */
@@ -300,7 +300,7 @@ body {
 
 /* The numeric part */
 .myStreakValue {
-  color: #777;       /* or green, etc. */
+  color: #ffffff;       /* or green, etc. */
   font-weight: bold; 
   /* font-size: 4rem; 
      (match your heading size if needed) */
@@ -321,8 +321,8 @@ body {
 }
 
 .highlight-profit {
-  color: #777;
- 
+  color: #999999;
+  
 }
 
 
