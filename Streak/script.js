@@ -3,18 +3,23 @@
   (partial sells do NOT produce multiple wins)
 *************************************************************/
 
-/** DOM references (IDs from your HTML) */
+/** DOM references */
 const searchBtn          = document.getElementById("searchBtn");
 const walletInput        = document.getElementById("walletInput");
 const leaderboardTable   = document.getElementById("leaderboard");
 const mainStreakHeading  = document.getElementById("mainStreak");
 const gotoRankBtn        = document.getElementById("gotoRankBtn");
 
+// The numeric portion in <span class="myStreakValue">0</span>
+const streakNumEl        = document.querySelector(".myStreakValue");
+
 /** SolTracker API key (visible in front-end) */
 const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc"; // <-- Replace with real key
 
-let lastWalletUsed = null; // We'll store the user’s wallet after they input it
-let lastStreakForShare = 0;
+let lastWalletUsed = null; 
+let lastStreakForShare = 0; // used for "Share My Streak" overlay
+
+
 /*************************************************************
   1) Fetch trades from SolTracker
 *************************************************************/
@@ -80,10 +85,9 @@ function parseTrade(trade) {
 }
 
 /*************************************************************
-  4) Data structure for each token’s buy->sell cycle
+  4) Data structure 
 *************************************************************/
 function createLedger() {
-  // ledger[mint] = { netTokenHolding, totalBoughtSol, totalProceedsSol, completedTrades: [] }
   return {};
 }
 
@@ -109,7 +113,7 @@ function handleBuy(ledger, mint, tokenAmt, costSol) {
 }
 
 /*************************************************************
-  6) handleSell => finalize cycle if netTokenHolding ~0
+  6) handleSell => finalize if netTokenHolding ~0
 *************************************************************/
 function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
   const obj = ensureTokenObj(ledger, mint);
@@ -118,12 +122,10 @@ function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
   obj.netTokenHolding  -= amtToSell;
   obj.totalProceedsSol += proceedsSol;
 
-  // finalize cycle if netTokenHolding < ~0
   if (obj.netTokenHolding < 0.0000001) {
     const netProfit = obj.totalProceedsSol - obj.totalBoughtSol;
     obj.completedTrades.push({ closeTime: time, netProfit });
 
-    // reset
     obj.netTokenHolding  = 0;
     obj.totalBoughtSol   = 0;
     obj.totalProceedsSol = 0;
@@ -131,7 +133,7 @@ function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
 }
 
 /*************************************************************
-  7) processTradesByFullCycles => returns { maxStreak, winRate, ...}
+  7) processTradesByFullCycles => { maxStreak, winRate, ...}
 *************************************************************/
 function processTradesByFullCycles(rawTrades) {
   rawTrades.sort((a, b) => a.time - b.time);
@@ -147,7 +149,7 @@ function processTradesByFullCycles(rawTrades) {
     }
   }
 
-  // gather all completed trades across tokens
+  // gather all completed
   let allCompleted = [];
   for (const mint in ledger) {
     allCompleted.push(...ledger[mint].completedTrades);
@@ -170,7 +172,6 @@ function processTradesByFullCycles(rawTrades) {
     }
   }
 
-  // Compute winRate
   let winRate = 0;
   if (totalTrades > 0) {
     winRate = (totalWins / totalTrades) * 100; 
@@ -189,7 +190,6 @@ function processTradesByFullCycles(rawTrades) {
   8) Show final row (just for immediate user feedback)
 *************************************************************/
 function showSingleRow(wallet, bestStreak) {
-  // Clear existing placeholders
   leaderboardTable.innerHTML = "";
 
   const row = document.createElement("div");
@@ -202,11 +202,10 @@ function showSingleRow(wallet, bestStreak) {
   const userDiv = document.createElement("div");
   userDiv.classList.add("user");
 
-  // Link to solscan
   const link = document.createElement("a");
   link.href = `https://solscan.io/account/${wallet}`;
   link.target = "_blank";
-  link.rel = "noopener noreferrer";
+  link.rel    = "noopener noreferrer";
   link.innerText = wallet;
   userDiv.appendChild(link);
 
@@ -217,214 +216,68 @@ function showSingleRow(wallet, bestStreak) {
   row.appendChild(rankDiv);
   row.appendChild(userDiv);
   row.appendChild(streakDiv);
-
   leaderboardTable.appendChild(row);
 }
 
 /*************************************************************
-  9) MAIN: on search click => fetch, compute, post, fetch leaderboard
+  9) MAIN: on search click => fetch, compute, post, fetch 
 *************************************************************/
 searchBtn.addEventListener("click", async () => {
   const wallet = walletInput.value.trim();
   if (!wallet) {
-    console.error("No wallet address provided.");
+    alert("Please enter a valid wallet!");
     return;
   }
 
-  // Mark the start time
-  const startTime = Date.now();
-
   // 1) Show overlay
   showLoadingOverlay();
-  // Show "Streak: ..." while loading
-  mainStreakHeading.innerText = "Streak: ...";
+
+  // The label is already “streak:” (#4a88f2).
+  // The numeric is .myStreakValue => “0” in white. 
+  // We'll keep it as is for now.
 
   let maxStreak = 0;
   try {
-    // 2) Fetch trades
     const rawTrades = await fetchWalletTrades(wallet);
-
-    // 3) Compute streak & winRate
     const { maxStreak: computedStreak, winRate } = processTradesByFullCycles(rawTrades);
+
     maxStreak = computedStreak;
     console.log("Computed winRate:", winRate);
 
-    // 4) Post to DB & fetch entire leaderboard
-    lastWalletUsed = wallet;
-    // If you also want to store the winRate in the DB, 
-    // you must pass it to postToLeaderboard and handle it on the server:
-    // await postToLeaderboard(wallet, maxStreak, winRate);
+    lastWalletUsed    = wallet;
+    lastStreakForShare= maxStreak; 
+
+    // 2) Post to DB & fetch entire leaderboard
     await postToLeaderboard(wallet, maxStreak, winRate);
     await fetchAndRenderLeaderboard();
 
-
-
-
-    lastStreakForShare = maxStreak; 
-
-
-
-
-
-    // 5) Wait at least 3s total
-    const elapsed = Date.now() - startTime;
-    const minLoading = 3000;
-    if (elapsed < minLoading) {
-      await new Promise(resolve => setTimeout(resolve, minLoading - elapsed));
-    }
-
-    // 6) Now 3s are done, show final streak
-    mainStreakHeading.innerHTML = `
-  <span class="streakLabel">Streak:</span>
-  <span class="myStreakValue">${maxStreak}</span>
-`;
-
-
-    // 7) Clear input
-    walletInput.value = "";
+    // 3) Update the numeric part => green
+    streakNumEl.textContent  = maxStreak;
+    streakNumEl.style.color  = "#00ffa2"; // green
 
   } catch (error) {
-    console.error("Could not fetch or parse trades:", error);
+    console.error("Could not fetch/parse trades:", error);
     alert("Error fetching trades or computing streak!");
   } finally {
-    // 8) Hide overlay
     hideLoadingOverlay();
   }
 });
-
-
-
-
-
-
-
-/*************************************************************
-  Variables for share logic
-*************************************************************/
-
-
-const openShareBtn      = document.getElementById("openShareBtn");
-const shareCanvasOverlay= document.getElementById("shareCanvasOverlay");
-const shareCanvas       = document.getElementById("shareCanvas");
-const closeShareBtn     = document.getElementById("closeShareBtn");
-const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
-const tweetShareBtn      = document.getElementById("tweetShareBtn");
-/*************************************************************
-  In your existing "search" flow, after computing maxStreak:
-*************************************************************/
-/*
-  ...
-  lastStreakForShare = maxStreak;
-  ...
-*/
-
-
-// 1) Make sure this is in the same file as the other share logic, e.g. script.js
-// 2) Place it below the declaration of `let lastStreakForShare = 0;` but
-//    it does NOT need to be inside the existing share/canvas code blocks.
-
-document.getElementById("tweetShareBtn").addEventListener("click", () => {
-  const tweetText = encodeURIComponent(`I just reached a streak of ${lastStreakForShare}!`);
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
-  window.open(twitterUrl, "_blank"); 
-});
-
-
-
-
-/*************************************************************
-  1) "Open Share" button => show overlay, draw canvas
-*************************************************************/
-openShareBtn.addEventListener("click", () => {
-  shareCanvasOverlay.style.display = "flex";  // or remove “hidden” class
-
-  // 1) Get canvas context & clear
-  const ctx = shareCanvas.getContext("2d");
-  ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
-
-  // 2) Load your background image (e.g. "4.jpg")
-  const bg = new Image();
-  bg.src = "4.jpg"; // adapt to your actual file path
-  bg.onload = () => {
-    // 3) Draw the background
-    ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
-
-
-    const x = 288; 
-    const y = 270;
-    // 4) Write the streak text
-    ctx.font = "bold 80px sans-serif";
-    ctx.fillStyle = "#00ffa2";
-    ctx.fillText(`${lastStreakForShare}`, x, y);
-    ctx.textAlign = "center"; 
-
-    // If you want to also show their wallet or any other info:
-    // ctx.fillText(`Wallet: ${someWalletVar}`, 50, 150);
-  };
-});
-
-/*************************************************************
-  2) "Close" button => hide overlay
-*************************************************************/
-closeShareBtn.addEventListener("click", () => {
-  shareCanvasOverlay.style.display = "none";
-});
-
-/*************************************************************
-  3) "Download" button => let user save the image
-*************************************************************/
-downloadCanvasBtn.addEventListener("click", () => {
-  const dataURL = shareCanvas.toDataURL("image/png");
-  const link = document.createElement("a");
-  link.download = "my_streak.png";  // the file name
-  link.href = dataURL;
-  link.click(); // triggers download
-});
-
-
-
-
-
 
 /*************************************************************
   OVERLAY LOGIC
 *************************************************************/
 function showLoadingOverlay() {
-  console.log("showLoadingOverlay() called");
   let overlay = document.getElementById("loadingOverlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loadingOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.backgroundColor = "rgba(255,0,0,0.9)";
-    overlay.style.zIndex = "9999";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
+  if (!overlay) return;
 
-    let spinner = document.createElement("div");
-    spinner.innerText = "Loading...";
-    spinner.style.fontSize = "2rem";
-    spinner.style.color = "#fff";
-    overlay.appendChild(spinner);
-
-    document.body.appendChild(overlay);
-    console.log("Created new overlay in DOM");
-  } else {
-    overlay.style.display = "flex";
-    console.log("Re-used existing overlay in DOM");
-  }
+  overlay.classList.remove("hidden");
 }
 
 function hideLoadingOverlay() {
-  const overlay = document.getElementById("loadingOverlay");
-  if (overlay) {
-    overlay.style.display = "none";
-  }
+  let overlay = document.getElementById("loadingOverlay");
+  if (!overlay) return;
+
+  overlay.classList.add("hidden");
 }
 
 /*************************************************************
@@ -453,7 +306,6 @@ async function fetchAndRenderLeaderboard() {
     const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     const data = await res.json();
 
-    // Clear existing
     leaderboardTable.innerHTML = "";
 
     data.forEach((rowData, index) => {
@@ -462,48 +314,41 @@ async function fetchAndRenderLeaderboard() {
       const divRow = document.createElement("div");
       divRow.classList.add("leaderboard-row");
 
-      // rank
       const rankDiv = document.createElement("div");
       rankDiv.classList.add("rank");
       rankDiv.innerText = rankIndex;
 
-      // user
       const userDiv = document.createElement("div");
       userDiv.classList.add("user");
       const link = document.createElement("a");
       link.href = `https://solscan.io/account/${rowData.wallet}`;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
+      link.target= "_blank";
+      link.rel   = "noopener noreferrer";
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
-      // streak
       const streakDiv = document.createElement("div");
       streakDiv.classList.add("streak");
-      streakDiv.innerText = rowData.streak;
+      streakDiv.innerText = rowData.streak; 
 
-      // (NEW) If you also have rowData.winRate from the server:
-      // create a <div> for it
+      // If your server returns rowData.winRate, do:
       const winRateDiv = document.createElement("div");
       winRateDiv.classList.add("winrate");
-      winRateDiv.innerText = rowData.winRate 
+      winRateDiv.innerText = rowData.winRate
         ? rowData.winRate.toFixed(1) + "%"
         : "--";
 
-      // Append columns in final order: rank, user, streak, winRate
       divRow.appendChild(rankDiv);
       divRow.appendChild(userDiv);
       divRow.appendChild(streakDiv);
       divRow.appendChild(winRateDiv);
 
-      // highlight newly searched user
       if (rowData.wallet === lastWalletUsed) {
         divRow.id = "currentUserRow";
         divRow.classList.add("highlight-current-user");
       }
       leaderboardTable.appendChild(divRow);
     });
-
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
   }
@@ -521,26 +366,77 @@ gotoRankBtn.addEventListener("click", () => {
   }
 });
 
-
-
-
-
-
-
-
 /*************************************************************
   (NEW) Load leaderboard on page load
 *************************************************************/
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   fetchAndRenderLeaderboard();
 });
-
 
 // Hide the intro overlay when "closeIntroBtn" is clicked
 const closeIntroBtn = document.getElementById("closeIntroBtn");
 closeIntroBtn.addEventListener("click", () => {
   const introOverlay = document.getElementById("introOverlay");
   if (introOverlay) {
-    introOverlay.style.display = "none";  // hide it
+    introOverlay.style.display = "none"; 
   }
+});
+
+/*************************************************************
+  SHARE MY STREAK Overlay
+*************************************************************/
+const openShareBtn      = document.getElementById("openShareBtn");
+const shareCanvasOverlay= document.getElementById("shareCanvasOverlay");
+const shareCanvas       = document.getElementById("shareCanvas");
+const closeShareBtn     = document.getElementById("closeShareBtn");
+const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
+const tweetShareBtn     = document.getElementById("tweetShareBtn");
+
+// 1) "Open Share" => show overlay, draw canvas
+openShareBtn.addEventListener("click", () => {
+  shareCanvasOverlay.classList.remove("hidden");
+
+  const ctx = shareCanvas.getContext("2d");
+  ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
+
+  // load background
+  const bg = new Image();
+  bg.src = "4.jpg"; // or your updated background 
+  bg.onload = () => {
+    ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
+
+    // Place the numeric portion 
+    ctx.font = "bold 80px sans-serif";
+    ctx.fillStyle = "#00ffa2";
+    ctx.textAlign = "center"; 
+    // e.g. center horizontally
+    const x = shareCanvas.width / 2;
+    // pick a Y 
+    const y = 250;
+
+    ctx.fillText(`${lastStreakForShare}`, x, y);
+  };
+});
+
+// 2) "Close" => hide
+closeShareBtn.addEventListener("click", () => {
+  shareCanvasOverlay.classList.add("hidden");
+});
+
+// 3) "Download" => save
+downloadCanvasBtn.addEventListener("click", () => {
+  const dataURL = shareCanvas.toDataURL("image/png");
+  const link = document.createElement("a");
+  link.download = "my_streak.png";
+  link.href = dataURL;
+  link.click();
+});
+
+// 4) "Tweet This!"
+tweetShareBtn.addEventListener("click", () => {
+  const tweetText = encodeURIComponent(
+    `I just reached a streak of ${lastStreakForShare}!`
+  );
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
+  window.open(twitterUrl, "_blank");
 });
