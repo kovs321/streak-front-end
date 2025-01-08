@@ -184,7 +184,7 @@ body {
   color: #eee;
 }
 .leaderboard-row:not(.heading):hover {
-  background-color: #2c4f8a;
+  background-color: #223d6d;
   transform: scale(1.01);
 }
 
