@@ -22,12 +22,19 @@
   <!-- ================= HEADER ================== -->
   <header class="header">
     
-    <!-- Logo container -->
-    <div class="logo-container">
-      <a href="https://streak.wtf">
-        <img id="myLogo" src="3blue.png" alt="My Logo" class="logo" />
-      </a>
+    <div class="header-topbar">
+      <div class="logo-container">
+        <a href="https://example.com">
+          <img id="myLogo" src="3blue.png" alt="My Logo" class="logo" />
+        </a>
+      </div>
+      <div class="share-container">
+        <button id="shareTwitterBtn" class="glow-btn">
+          Twitter
+        </button>
+      </div>
     </div>
+
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
@@ -44,10 +51,7 @@
       });
     </script>
 
-    <!-- Twitter button container (top-right) -->
-    <div class="share-container">
-      <button id="shareTwitterBtn" class="glow-btn">Twitter</button>
-    </div>
+  
 
     <!-- Main header content: heading, subtitle, search bar -->
     <div class="header-content">
