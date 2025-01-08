@@ -298,9 +298,12 @@ body {
 }
 
 
+/* The numeric part */
 .myStreakValue {
-  color: #00ffa2; /* or whichever color you like */
-  font-weight: bold; /* optional */
+  color: #ffffff;       /* or green, etc. */
+  font-weight: bold; 
+  /* font-size: 4rem; 
+     (match your heading size if needed) */
 }
 
 /* The label “Streak:” color */
