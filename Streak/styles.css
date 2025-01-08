@@ -81,7 +81,7 @@ body {
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 .search-bar button:hover {
-  background-color: #ab9ff2;
+  background-color: #7baaf8;
   transform: scale(1.05);
 }
 .flame-icon {
@@ -115,7 +115,7 @@ body {
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 #shareTwitterBtn:hover {
-  background-color: #ab9ff2;
+  background-color: #7baaf8;
   transform: scale(1.02);
 }
 
@@ -221,7 +221,7 @@ body {
 
 
 .leaderboard-row:not(.heading) .user {
-  color: #ab9ff2;
+  color: #7baaf8;
 }
 
 /* user column color, if needed */
@@ -351,7 +351,7 @@ body {
 
 /* Hover, visited, active, etc. to override default link styles */
 .leaderboard-row .user a:hover {
-  color: #ab9ff2;
+  color: #7baaf8;
 }
 
 
@@ -384,7 +384,7 @@ body {
 }
 
 #gotoRankBtn:hover {
-  background-color: #ab9ff2; /* same hover color as Twitter button */
+  background-color: #7baaf8; /* same hover color as Twitter button */
   transform: scale(1.02);
 }
 
@@ -443,7 +443,7 @@ body {
   transition: background-color 0.2s ease;
 }
 .intro-box button:hover {
-  background-color: #ab9ff2;
+  background-color: #7baaf8;
 }
 
 
@@ -505,6 +505,6 @@ body {
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 #openShareBtn:hover {
-  background-color: #ab9ff2;
+  background-color: #7baaf8;
   transform: scale(1.02);
 }
