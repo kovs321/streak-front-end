@@ -25,16 +25,15 @@
     <!-- Logo container -->
     <div class="logo-container">
       <a href="https://streak.wtf">
-        <img id='myLogo' src="3.png" alt="My Logo" class="logo" />
+        <img id="myLogo" src="3.png" alt="My Logo" class="logo" />
       </a>
     </div>
-
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const logoImg = document.getElementById("myLogo");
-        const originalSrc = logoImg.src;          // "logo_dark.png"
-        const hoverSrc    = "33.png";     // The lighter version
+        const originalSrc = logoImg.src; // "3.png"
+        const hoverSrc    = "33.png";    // The lighter version
       
         logoImg.addEventListener("mouseover", () => {
           logoImg.src = hoverSrc;
@@ -43,20 +42,20 @@
           logoImg.src = originalSrc;
         });
       });
-      </script>
+    </script>
 
     <!-- Twitter button container (top-right) -->
     <div class="share-container">
-      <button id="shareTwitterBtn" class="glow-btn">
-        Twitter
-      </button>
+      <button id="shareTwitterBtn" class="glow-btn">Twitter</button>
     </div>
 
     <!-- Main header content: heading, subtitle, search bar -->
     <div class="header-content">
+      <!-- Corrected: close the <h1> properly -->
       <h1 id="mainStreak">
-        <span class="streakLabel">Streak:</span>
+        <span class="streakLabel">streak:</span>
         <span class="myStreakValue">0</span>
+      </h1>
 
       <p>
         Enter your Solana wallet to see your 
@@ -86,79 +85,65 @@
 
   <!-- =========== LEADERBOARD SECTION ========== -->
   <section class="leaderboard-section">
-  <div class="leaderboard-action">
-    <!-- New button to jump to rank -->
-    <button id="gotoRankBtn" style="margin-bottom: 1rem;">
-      See Rank
-    </button>
-    <button id="openShareBtn" style="margin-bottom: 1rem;">
-      Share My Streak
-    </button>
-  </div>
+    <div class="leaderboard-action">
+      <!-- New button to jump to rank -->
+      <button id="gotoRankBtn" style="margin-bottom: 1rem;">See Rank</button>
+      <button id="openShareBtn" style="margin-bottom: 1rem;">Share My Streak</button>
+    </div>
 
-  <h2>Leaderboard</h2>
+    <h2>Leaderboard</h2>
 
-  <div class="leaderboard-row heading">
-    <div class="rank">RANK</div>
-    <div class="user">USER</div>
-    <div class="streak">STREAK</div>
-    <div class="winrate">WIN%</div>
-  </div>
-  <div class="leaderboard-table" id="leaderboard"></div>
-</section>
-
+    <div class="leaderboard-row heading">
+      <div class="rank">RANK</div>
+      <div class="user">USER</div>
+      <div class="streak">STREAK</div>
+      <div class="winrate">WIN%</div>
+    </div>
+    <div class="leaderboard-table" id="leaderboard"></div>
+  </section>
   <!-- ========= END LEADERBOARD SECTION ========= -->
 
-
-<!-- Loading Overlay (initially hidden) -->
-<div id="loadingOverlay" class="overlay hidden">
-  <div class="loading-box">
-    <h2>Loading...</h2>
-    <p>Please wait while we fetch your trades.</p>
-  </div>
-</div>
-
-
-
-<!-- Intro Overlay (initially visible) -->
-<div id="introOverlay" class="intro-overlay">
-  <div class="intro-box">
-    <img 
-      src="3new.png" 
-      alt="Streak Title" 
-      style="max-width: 100%; height: auto;"
-    />
-    <p>1. Enter your Solana wallet</p>
-    <p>2. We calculate your longest profitable streak and winrate</p>
-    <p>3. View the leaderboard and share your results!</p>
-    <button id="closeIntroBtn">Let's go!</button>
-  </div>
-</div>
-
-
-<!-- Overlay for the share canvas -->
-<div id="shareCanvasOverlay" class="overlay hidden">
-  <div class="share-canvas-box">
-    <h2>Copy your Streak and Share to Twitter</h2>
-
-    <!-- The canvas for drawing the background + text -->
-    <canvas id="shareCanvas" width="600" height="400"></canvas>
-
-    <div class="share-buttons">
-      <button id="downloadCanvasBtn">Download Image</button>
-      <button id="closeShareBtn">Close</button>
-      <button id="tweetShareBtn">Tweet This!</button>
+  <!-- Loading Overlay (initially hidden) -->
+  <div id="loadingOverlay" class="overlay hidden">
+    <div class="loading-box">
+      <h2>Loading...</h2>
+      <p>Please wait while we fetch your trades.</p>
     </div>
   </div>
-</div>
 
+  <!-- Intro Overlay (initially visible) -->
+  <div id="introOverlay" class="intro-overlay">
+    <div class="intro-box">
+      <img 
+        src="3new.png" 
+        alt="Streak Title" 
+        style="max-width: 100%; height: auto;"
+      />
+      <p>1. Enter your Solana wallet</p>
+      <p>2. We calculate your longest profitable streak and winrate</p>
+      <p>3. View the leaderboard and share your results!</p>
+      <button id="closeIntroBtn">Let's go!</button>
+    </div>
+  </div>
 
+  <!-- Overlay for the share canvas -->
+  <div id="shareCanvasOverlay" class="overlay hidden">
+    <div class="share-canvas-box">
+      <h2>Copy your Streak and Share to Twitter</h2>
+
+      <!-- The canvas for drawing the background + text -->
+      <canvas id="shareCanvas" width="600" height="400"></canvas>
+
+      <div class="share-buttons">
+        <button id="downloadCanvasBtn">Download Image</button>
+        <button id="closeShareBtn">Close</button>
+        <button id="tweetShareBtn">Tweet This!</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Script at the bottom -->
   <script src="script.js"></script>
 
-
-
-  
 </body>
 </html>
