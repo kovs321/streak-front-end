@@ -1,11 +1,11 @@
-/* Reset / box sizing */
+/* RESET / BOX SIZING */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Body layout & font */
+/* BODY LAYOUT & FONT */
 body {
   display: flex;
   flex-direction: column;
@@ -19,21 +19,66 @@ body {
   font-family: 'Atma', serif;
 }
 
-/* Header */
+/* HEADER */
 .header {
-  position: relative;
   width: 100%;
   margin: 0 0 2rem 0;
-  padding: 4rem 2rem;
+  padding: 2rem; /* you can adjust top/bottom padding here */
   text-align: center;
+  /* position: relative;  <-- only if you need a special layout inside header */
 }
 
-/* Container for h1, paragraph, search bar */
+/* =============== NEW: HEADER-TOPBAR =============== */
+.header-topbar {
+  display: flex;
+  justify-content: space-between;  /* logo on left, Twitter button on right */
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem; /* optional spacing under the top bar */
+}
+
+/* LOGO CONTAINER & LOGO */
+.logo-container {
+  /* no absolute positioning needed */
+}
+.logo {
+  width: 220px;
+  height: auto;
+}
+
+/* SHARE-CONTAINER & TWITTER BUTTON */
+.share-container {
+  /* remove absolute positioning; let flex handle alignment on the right */
+}
+.glow-btn, 
+#shareTwitterBtn {
+  width: 125px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  background-color: #4a88f2;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.glow-btn:hover,
+#shareTwitterBtn:hover {
+  background-color: #7baaf8;
+  transform: scale(1.02);
+}
+
+/* =============== HEADER-CONTENT BELOW THE TOPBAR =============== */
 .header-content {
-  margin-top: 210px;
+  margin-top: 2rem; /* or 3rem, etc.  Adjust to push content down from the top bar */
 }
 
-/* Headings */
+/* HEADINGS INSIDE HEADER-CONTENT */
 .header h1 {
   font-size: 4rem;
   margin-bottom: 1rem;
@@ -44,7 +89,23 @@ body {
   color: #ffffff;
 }
 
-/* ===== Search Bar ===== */
+/* STREAK LABEL (the "Streak:" text) */
+.streakLabel {
+  color: #4a88f2;
+  font-size: 1em;  /* or 4rem if you want it the same as the numeric part */
+  font-weight: normal;
+  margin-right: 0.25rem;
+}
+
+/* MYSTREAKVALUE (the numeric part, initially 0, becomes green after loaded) */
+.myStreakValue {
+  color: #ffffff;       /* starts out white */
+  font-weight: bold;
+  /* if you want to match your 4rem heading size, do it here: 
+     font-size: 4rem; */
+}
+
+/* =============== SEARCH BAR =============== */
 .search-bar {
   display: inline-flex;
   align-items: center;
@@ -62,10 +123,8 @@ body {
 }
 .search-bar input:focus {
   outline: none;
-  border-color: #4a88f2; 
+  border-color: #4a88f2;
 }
-
-/* Flame button (48×48) */
 .search-bar button {
   width: 48px;
   height: 48px;
@@ -89,51 +148,7 @@ body {
   height: 32px;
 }
 
-/* Share container (Twitter button) */
-.share-container {
-  position: absolute;
-  top: 2rem;   
-  right: 10rem;
-  z-index: 999;
-}
-
-/* Twitter button (125×40) */
-#shareTwitterBtn {
-  width: 125px;
-  height: 40px;
-  border: none;
-  border-radius: 4px;
-  background-color: #4a88f2;
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-#shareTwitterBtn:hover {
-  background-color: #7baaf8;
-  transform: scale(1.02);
-}
-
-/* Logo container (top-left) */
-.logo-container {
-  position: absolute;
-  top: -3rem;
-  left: 9rem;
-  z-index: 999;
-}
-
-
-.logo {
-  width: 220px; 
-  height: auto;
-}
-
-/* ===== Leaderboard section ===== */
+/* =============== LEADERBOARD SECTION =============== */
 .leaderboard-section {
   width: 100%;
   max-width: 1200px;
@@ -148,47 +163,40 @@ body {
   margin-bottom: 1.5rem;
   font-size: 2rem;
   font-weight: 600;
-  color: #4a88f2;
+  color: #4a88f2; /* or whichever color you prefer */
 }
 
-/* The table container */
+/* LEADERBOARD TABLE */
 .leaderboard-table {
   width: 100%;
 }
 
-/* Base row style */
+/* LEADERBOARD ROWS */
 .leaderboard-row {
   display: grid;
-  /* rank, user, streak => 3 columns */
-  grid-template-columns: 50px 2fr 1fr 1fr;
+  grid-template-columns: 50px 2fr 1fr 1fr; /* rank, user, streak, winrate */
   align-items: center;
-  background-color: #2a2a2a; 
+  background-color: #2a2a2a;
   padding: 0.75rem 1rem;
   border-radius: 4px;
-  margin: 0.5rem 0; 
+  margin: 0.5rem 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   opacity: 1;
 }
-
-/* Heading row */
 .leaderboard-row.heading {
-  background-color: #181818; 
-  color: #777;      
-  font-weight: bold; 
+  background-color: #181818;
+  color: #777;
+  font-weight: bold;
 }
-
-/* Non-heading rows */
 .leaderboard-row:not(.heading) {
   font-family: sans-serif;
   font-weight: normal;
   color: #eee;
 }
 .leaderboard-row:not(.heading):hover {
-  background-color: #2c4f8a;
+  background-color: #2c4f8a; /* or #7baaf8 if you want a lighter hover */
   transform: scale(1.01);
 }
-
-/* Each cell */
 .leaderboard-row div {
   padding: 0.25rem 0;
   overflow: hidden;
@@ -202,176 +210,54 @@ body {
   white-space: normal;
 }
 
-/* Rank column styling */
+/* rank column */
 .rank {
   font-weight: bold;
-  color: #777; 
+  color: #777;
 }
-
 .leaderboard-row:not(.heading) .rank {
   color: #ffffff;
 }
 
-/* Streak column color (non-heading rows) */
+/* streak column color (non-heading) */
 .leaderboard-row:not(.heading) .streak {
   color: #00ffa2;
   font-weight: bold;
 }
 
-
-
+/* user column color (non-heading) */
 .leaderboard-row:not(.heading) .user {
-  color: #7baaf8;
+  color: #7baaf8; /* or #ab9ff2, up to you */
 }
 
-/* user column color, if needed */
-.user {
-  color: #777777;
-}
-
-
-
-
-
-/* Overlay covers the entire screen */
-.overlay {
-  position: fixed;       /* stays in place even on scroll */
-  top: 0;
-  left: 0;
-  width: 100vw;         /* full screen width */
-  height: 100vh;        /* full screen height */
-  background: rgba(0, 0, 0, 0.6); /* semi-transparent black */
-  display: flex;        /* use flex to center the box */
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;        /* super high so it covers everything */
-}
-
-/* By default, we'll hide it with .hidden. 
-   We can also do .overlay:not(.hidden) if you prefer. */
-.hidden {
-  display: none; 
-}
-
-.loading-box {
-  /* Hard-set the box size. E.g. ~20% of a typical 1920px wide screen => 384px */
-  width: 320px;
-  height: 180px; /* Or whatever you prefer */
-
-  background-color: #4a88f2;
-  color: #eee;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  text-align: center;
-  box-sizing: border-box;
-
-  /* Center content inside the box */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-/* 
-  Use a simple @media query to shrink
-  the box if the viewport is narrower than, say, 400–450px. 
-  That way it won’t be too large to fit. 
-*/
-@media (max-width: 450px) {
-  .loading-box {
-    width: 90%;       /* fallback for very narrow screens */
-    height: auto;     /* Let the text flow */
-    padding: 1rem;    /* slightly smaller padding */
-  }
-}
-
-
-/* Optional: style the text in the loading-box */
-.loading-box h2 {
-  margin-bottom: 1rem;
-  font-size: 1.6rem;
-}
-.loading-box p {
-  font-size: 1rem;
-  margin: 0.5rem 0 0;
-}
-
-
-/* The numeric part */
-.myStreakValue {
-  color: #ffffff;       /* or green, etc. */
-  font-weight: bold; 
-  /* font-size: 4rem; 
-     (match your heading size if needed) */
-}
-
-/* The label “Streak:” color */
-.streakLabel {
-  color: #4a88f2;       /* your desired color */
-  /* optional: size or weight if you want to match the H1 */
-  /* font-size: 4rem; 
-     font-weight: normal;
-     margin-right: 0.25rem; */
-}
-
-.highlight-longest {
+/* WINRATE column color (non-heading) */
+.leaderboard-row:not(.heading) .winrate {
   color: #00ffa2; 
-  font-weight: bold;  /* optional */
+  font-weight: bold;
 }
 
-.highlight-profit {
-  color: #f0ff00;
-  text-decoration: underline; /* optional */
-}
-
-
-
-.highlight-current-user {
-  background-color: #3a3f1e; /* or any color you like */
-  
-  /* A bigger, brighter glow: 
-     - The 25px is the blur radius (larger = softer/larger glow)
-     - The 10px is the spread radius (larger = extends glow outward)
-     - RGBA with a higher alpha (e.g. 0.8) makes the glow more opaque
-  */
-  box-shadow: 0 0 15px 5px rgba(0, 255, 8, 0.8); 
-
-  /* Transition for a smoother visual when row is highlighted */
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-
-
-
+/* optional user link color overrides */
 .leaderboard-row .user a {
-  color: #4a88f2; /* or any color you want */
-  text-decoration: none; /* remove underline if desired */
+  color: #4a88f2; 
+  text-decoration: none;
 }
-
-/* Hover, visited, active, etc. to override default link styles */
 .leaderboard-row .user a:hover {
-  color: #7baaf8;
+  color: #7baaf8; 
 }
 
-
-
-
-
-/* Container that holds the "Go to My Rank" button */
+/* =============== RANK + SHARE STREAK BUTTONS (top row of leaderboard) =============== */
 .leaderboard-action {
   display: flex;
-  justify-content: space-between; /* Align items (the button) to the left */
-  margin-bottom: 1rem;         /* optional spacing */
+  justify-content: space-between; 
+  margin-bottom: 1rem;
 }
-
-/* Duplicate the same styling as the Twitter button (#shareTwitterBtn) */
-#gotoRankBtn {
+#gotoRankBtn,
+#openShareBtn {
   width: 125px;
   height: 40px;
   border: none;
   border-radius: 4px;
-  background-color: #4a88f2; /* main color */
+  background-color: #4a88f2;
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
@@ -382,48 +268,63 @@ body {
   justify-content: center;
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
-
-#gotoRankBtn:hover {
-  background-color: #7baaf8; /* same hover color as Twitter button */
+#gotoRankBtn:hover,
+#openShareBtn:hover {
+  background-color: #7baaf8;
   transform: scale(1.02);
 }
 
-
-
-
-/* Possibly give .winrate a different color (similar to .streak) */
-.leaderboard-row:not(.heading) .winrate {
-  color: #00ffa2; /* an orange color, for example */
-  font-weight: bold;
+/* =============== OVERLAYS =============== */
+.overlay.hidden {
+  display: none;
 }
 
-
-
-
-
-/* The intro overlay covers the screen, similar to your loading overlay */
-.intro-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6); /* translucent black */
+/* LOADING OVERLAY BOX */
+.loading-box {
+  width: 320px;
+  height: 180px;
+  background-color: #4a88f2;
+  color: #eee;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  text-align: center;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 9998; /* slightly below your "loading overlay" z-index if you prefer */
+  padding: 1.5rem;
+}
+.loading-box h2 {
+  margin-bottom: 1rem;
+  font-size: 1.6rem;
+}
+.loading-box p {
+  font-size: 1rem;
+  margin: 0.5rem 0 0;
 }
 
-/* The box in the center */
+/* INTRO OVERLAY */
+.intro-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+  z-index: 9998; 
+}
 .intro-box {
   background-color: #2a2a2a;
   color: #eee;
   padding: 2rem;
   border-radius: 8px;
   text-align: center;
-  width: 320px;     /* approximate size */
-  max-width: 90vw;  /* shrink on smaller screens */
+  width: 320px;
+  max-width: 90vw;
 }
 .intro-box h2 {
   margin-bottom: 1rem;
@@ -446,21 +347,19 @@ body {
   background-color: #7baaf8;
 }
 
-
-/* Reuse your existing overlay class, or define a new one */
+/* SHARE CANVAS OVERLAY */
 #shareCanvasOverlay {
   position: fixed;
-  top: 0; left: 0;
+  top: 0; 
+  left: 0;
   width: 100vw; 
   height: 100vh;
   background: rgba(0, 0, 0, 0.6);
-  display: none;  /* hidden by default */
+  display: none; 
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
-
-/* The box wrapping our canvas & buttons */
 .share-canvas-box {
   background-color: #2a2a2a;
   color: #eeeeee;
@@ -469,42 +368,16 @@ body {
   text-align: center;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   width: 650px;
-  max-width: 90vw; /* in case screen is narrower */
+  max-width: 90vw;
 }
-
-/* The canvas itself */
 #shareCanvas {
   display: block;
   margin: 1rem auto;
-  border: 2px solid #444; /* optional to see the canvas boundary */
+  border: 2px solid #444;
 }
-
-/* Container for the "Download" + "Close" buttons */
 .share-buttons {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
-}
-
-
-#openShareBtn {
-  width: 125px;
-  height: 40px;
-  border: none;
-  border-radius: 4px;
-  background-color: #4a88f2; /* same color */
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-#openShareBtn:hover {
-  background-color: #7baaf8;
-  transform: scale(1.02);
 }
