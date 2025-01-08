@@ -41,7 +41,7 @@ body {
 .header p {
   font-size: 1.4rem;
   margin-bottom: 1.5rem;
-  color: #999999;
+  color: #ffffff;
 }
 
 /* ===== Search Bar ===== */
@@ -316,12 +316,12 @@ body {
 }
 
 .highlight-longest {
-  color: #00ffa2; 
-  font-weight: bold;  /* optional */
+  color: #ffffff; 
+  /* font-weight: bold;   optional */
 }
 
 .highlight-profit {
-  color: #999999;
+  color: #ffffff;
   
 }
 
