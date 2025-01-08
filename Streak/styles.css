@@ -300,7 +300,7 @@ body {
 
 /* The numeric part */
 .myStreakValue {
-  color: #ffffff;       /* or green, etc. */
+  color: #777;       /* or green, etc. */
   font-weight: bold; 
   /* font-size: 4rem; 
      (match your heading size if needed) */
@@ -321,8 +321,8 @@ body {
 }
 
 .highlight-profit {
-  color: #f0ff00;
-  text-decoration: underline; /* optional */
+  color: #777;
+ 
 }
 
 
