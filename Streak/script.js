@@ -34,18 +34,16 @@ let lastStreakForShare  = 0;     // used for “Share My Streak” overlay
 *************************************************************/
 // If you plan to hide your key, remove or disable the direct fetch here 
 // and let your server handle SolTracker requests.
-const SOLTRACKER_API_KEY = "YOUR_SOLTRACKER_KEY_HERE"; 
 async function fetchWalletTrades(walletAddress) {
-  const url = `https://data.solanatracker.io/wallet/${walletAddress}/trades`;
-  const response = await fetch(url, {
-    headers: { "x-api-key": SOLTRACKER_API_KEY },
-  });
+  const url = `https://streak-front-end-production.up.railway.app/api/trades?wallet=${walletAddress}`;
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Fetch error: ${response.status} ${response.statusText}`);
   }
   const data = await response.json();
   return data.trades || [];
 }
+
 
 /*************************************************************
   2) processTrades => parse & compute (same as your older logic)

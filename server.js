@@ -103,7 +103,7 @@ app.get("/api/trades", async (req, res) => {
   try {
     const walletAddress = req.query.wallet;
     if (!walletAddress) {
-      return res.status(400).json({ error: "Missing wallet param" });
+      return res.status(400).json({ error: "Missing wallet parameter" });
     }
 
     const url = `https://data.solanatracker.io/wallet/${walletAddress}/trades`;
@@ -113,13 +113,15 @@ app.get("/api/trades", async (req, res) => {
     if (!response.ok) {
       throw new Error(`SolTracker error: ${response.statusText}`);
     }
+
     const data = await response.json();
-    return res.json({ trades: data.trades || [] });
+    res.json({ trades: data.trades || [] });
   } catch (err) {
     console.error("Error in /api/trades:", err);
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 // Start server
 const PORT = process.env.PORT || 8080;
