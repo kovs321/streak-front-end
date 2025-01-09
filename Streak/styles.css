@@ -489,13 +489,15 @@ body {
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
+  flex-direction: row;
   text-transform: uppercase;
   cursor: pointer;
   display: flex;     /* if you want to center text + possible icons */
   align-items: center;
   justify-content: center;
   transition: transform 0.2s ease, background-color 0.2s ease;
-  margin: 0.25rem;   /* optional spacing between buttons */
+  margin: 1rem;  
+  gap: 1rem; /* optional spacing between buttons */
 }
 .share-buttons button:hover {
   background-color: #7baaf8; /* same hover color as the site */
