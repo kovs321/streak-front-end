@@ -1,116 +1,93 @@
-////////////////////////////////////////////////////////////
-// server.js (MySQL + Railway)
-////////////////////////////////////////////////////////////
-const express = require("express");
-const cors = require("cors");
-const mysql = require("mysql2/promise"); // <-- using mysql2/promise
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql2/promise'); // <-- for async/await
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Just optional debug/logging middleware
-app.use((req, res, next) => {
-  console.log(`Incoming request: ${req.method} ${req.url}`);
-  next();
-});
+// Create a MySQL connection pool
+let pool;
 
-// -------------- MySQL Setup --------------
-// We'll create a "pool" of connections, using your env vars from Railway:
-//
-//   process.env.MYSQLHOST
-//   process.env.MYSQLUSER
-//   process.env.MYSQLPASSWORD
-//   process.env.MYSQLDATABASE
-//   process.env.MYSQLPORT
-//
-// *Make sure these are actually present in your Railway environment tab*
-let db;
-
+/**
+ * Initialize DB pool ONCE when the app starts.
+ * We read the env vars and create the pool. 
+ */
 async function initDB() {
   try {
-    db = await mysql.createPool({
-      host: process.env.MYSQLHOST || "mysql.railway.internal",
-      user: process.env.MYSQLUSER || "root",
-      password: process.env.MYSQLPASSWORD || "",
-      database: process.env.MYSQLDATABASE || "railway",
-      port: process.env.MYSQLPORT ? parseInt(process.env.MYSQLPORT, 10) : 3306,
-      waitForConnections: true,
-      connectionLimit: 5, // or higher if needed
+    pool = await mysql.createPool({
+      host:     process.env.MYSQLHOST,      // e.g. 'mysql.railway.internal'
+      user:     process.env.MYSQLUSER,      // e.g. 'root'
+      password: process.env.MYSQLPASSWORD,  // your password from Railway
+      database: process.env.MYSQLDATABASE,  // e.g. 'railway'
+      port:     process.env.MYSQLPORT,      // 3306
+      // You can tweak connectionLimit, etc. if you like
     });
-
     console.log("MySQL pool created.");
 
-    // Ensure leaderboard table exists:
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS leaderboard (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        wallet VARCHAR(255) UNIQUE,
-        streak INT DEFAULT 0,
-        winRate FLOAT DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-    console.log("leaderboard table ensured/existing or created.");
+    // Optional: test a simple query
+    await pool.execute('SELECT 1');
+    console.log("DB connected successfully.");
   } catch (err) {
     console.error("Error initializing DB:", err);
   }
 }
 
-// -------------- Routes --------------
+// Call initDB at startup
+initDB();
 
-// POST /leaderboard => upsert (wallet, streak, winRate)
-app.post("/leaderboard", async (req, res) => {
-  console.log("POST /leaderboard body:", req.body);
-
-  const { wallet, streak, winRate } = req.body;
-  if (!wallet) {
-    return res.status(400).json({ error: "Missing wallet" });
-  }
-
+// ROUTE 1) POST /leaderboard
+// Insert or update a wallet’s streak & winRate in MySQL
+app.post('/leaderboard', async (req, res) => {
   try {
-    // MySQL "upsert" with ON DUPLICATE KEY
+    const { wallet, streak, winRate } = req.body;
+
+    if (!wallet) {
+      return res.status(400).json({ error: "Missing wallet" });
+    }
+
+    // Using MySQL's "INSERT … ON DUPLICATE KEY UPDATE" 
+    // (requires "wallet" to be the PRIMARY KEY or UNIQUE in your table)
     const sql = `
       INSERT INTO leaderboard (wallet, streak, winRate)
       VALUES (?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        streak = VALUES(streak),
-        winRate = VALUES(winRate),
-        updated_at = CURRENT_TIMESTAMP
+        streak  = VALUES(streak),
+        winRate = VALUES(winRate)
     `;
-    const params = [wallet, streak || 0, winRate || 0];
-    await db.execute(sql, params);
 
-    console.log(`Upsert done: wallet=${wallet}, streak=${streak}, winRate=${winRate}`);
+    // Execute the query (pool must be initialized)
+    await pool.execute(sql, [wallet, streak || 0, winRate || 0]);
+
+    console.log(`Upsert done for wallet: ${wallet}, streak: ${streak}, winRate: ${winRate}`);
     return res.json({ message: "Leaderboard updated", wallet, streak, winRate });
   } catch (err) {
-    console.error("DB insert/update error:", err);
-    return res.status(500).json({ error: "Database error" });
+    console.error("POST /leaderboard error:", err);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// GET /leaderboard => top 50 by streak desc
-app.get("/leaderboard", async (req, res) => {
-  console.log("GET /leaderboard");
+// ROUTE 2) GET /leaderboard
+// Return top 50, sorted by streak DESC
+app.get('/leaderboard', async (req, res) => {
   try {
     const sql = `
-      SELECT wallet, streak, winRate, updated_at
+      SELECT wallet, streak, winRate
       FROM leaderboard
-      ORDER BY streak DESC, updated_at DESC
+      ORDER BY streak DESC
       LIMIT 50
     `;
-    const [rows] = await db.execute(sql);
-    console.log(`Returning ${rows.length} rows`);
+    const [rows] = await pool.execute(sql);
     return res.json(rows);
   } catch (err) {
-    console.error("DB select error:", err);
-    return res.status(500).json({ error: "Database error" });
+    console.error("GET /leaderboard error:", err);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-// -------------- Start Server --------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
+// Start server
+const PORT = process.env.PORT || 3000; 
+app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
-  await initDB();
 });
