@@ -108,7 +108,7 @@ app.get("/api/trades", async (req, res) => {
 
     const url = `https://data.solanatracker.io/wallet/${walletAddress}/trades`;
     const response = await fetch(url, {
-      headers: { "x-api-key": SOLTRACKER_API_KEY },
+      headers: { "x-api-key": process.env.SOLTRACKER_API_KEY },
     });
     if (!response.ok) {
       throw new Error(`SolTracker error: ${response.statusText}`);
