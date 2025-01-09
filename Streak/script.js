@@ -403,7 +403,7 @@ openShareBtn.addEventListener("click", () => {
 
   // load background
   const bg = new Image();
-  bg.src = "4.jpg"; // or your updated background 
+  bg.src = "share.png"; // or your updated background 
   bg.onload = () => {
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
 
