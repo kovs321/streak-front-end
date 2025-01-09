@@ -4,21 +4,32 @@
 *************************************************************/
 
 /** DOM references */
-const searchBtn          = document.getElementById("searchBtn");
-const walletInput        = document.getElementById("walletInput");
-const leaderboardTable   = document.getElementById("leaderboard");
-const mainStreakHeading  = document.getElementById("mainStreak");
-const gotoRankBtn        = document.getElementById("gotoRankBtn");
+const searchBtn         = document.getElementById("searchBtn");
+const walletInput       = document.getElementById("walletInput");
+const leaderboardTable  = document.getElementById("leaderboard");
+const mainStreakHeading = document.getElementById("mainStreak");
+const gotoRankBtn       = document.getElementById("gotoRankBtn");
 
 // The numeric portion in <span class="myStreakValue">0</span>
-const streakNumEl        = document.querySelector(".myStreakValue");
+const streakNumEl       = document.querySelector(".myStreakValue");
+
+// (NEW) For sorting columns
+const sortByStreakEl    = document.getElementById("sortByStreak");  // <div id="sortByStreak" ...
+const sortByWinEl       = document.getElementById("sortByWin");     // <div id="sortByWin" ...
 
 /** SolTracker API key (visible in front-end) */
-const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc"; // <-- Replace with real key
+const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc";
 
-let lastWalletUsed = null; 
-let lastStreakForShare = 0; // used for "Share My Streak" overlay
+/** 
+ * We keep track of which column is currently sorted & whether ascending or descending.
+ * e.g. currentSortColumn = "streak" or "winRate"
+ *      currentSortOrder  = "asc" or "desc"
+ */
+let currentSortColumn   = null; 
+let currentSortOrder    = "desc";
 
+let lastWalletUsed      = null; 
+let lastStreakForShare  = 0; // used for "Share My Streak" overlay
 
 /*************************************************************
   1) Fetch trades from SolTracker
@@ -85,7 +96,7 @@ function parseTrade(trade) {
 }
 
 /*************************************************************
-  4) Data structure 
+  4) Data structure
 *************************************************************/
 function createLedger() {
   return {};
@@ -174,7 +185,7 @@ function processTradesByFullCycles(rawTrades) {
 
   let winRate = 0;
   if (totalTrades > 0) {
-    winRate = (totalWins / totalTrades) * 100; 
+    winRate = (totalWins / totalTrades) * 100;
   }
 
   return {
@@ -220,7 +231,7 @@ function showSingleRow(wallet, bestStreak) {
 }
 
 /*************************************************************
-  9) MAIN: on search click => fetch, compute, post, fetch 
+  9) MAIN: on search click => fetch, compute, post, fetch
 *************************************************************/
 searchBtn.addEventListener("click", async () => {
   const wallet = walletInput.value.trim();
@@ -232,28 +243,22 @@ searchBtn.addEventListener("click", async () => {
   // 1) Show overlay
   showLoadingOverlay();
 
-  // The label is already “streak:” (#4a88f2).
-  // The numeric is .myStreakValue => “0” in white. 
-  // We'll keep it as is for now.
-
   let maxStreak = 0;
   try {
     const rawTrades = await fetchWalletTrades(wallet);
     const { maxStreak: computedStreak, winRate } = processTradesByFullCycles(rawTrades);
 
-    maxStreak = computedStreak;
-    console.log("Computed winRate:", winRate);
-
-    lastWalletUsed    = wallet;
-    lastStreakForShare= maxStreak; 
+    maxStreak           = computedStreak;
+    lastWalletUsed      = wallet;
+    lastStreakForShare  = maxStreak; 
 
     // 2) Post to DB & fetch entire leaderboard
     await postToLeaderboard(wallet, maxStreak, winRate);
     await fetchAndRenderLeaderboard();
 
     // 3) Update the numeric part => green
-    streakNumEl.textContent  = maxStreak;
-    streakNumEl.style.color  = "#00ffa2"; // green
+    streakNumEl.textContent = maxStreak;
+    streakNumEl.style.color = "#00ffa2";
 
   } catch (error) {
     console.error("Could not fetch/parse trades:", error);
@@ -269,14 +274,12 @@ searchBtn.addEventListener("click", async () => {
 function showLoadingOverlay() {
   let overlay = document.getElementById("loadingOverlay");
   if (!overlay) return;
-
   overlay.classList.remove("hidden");
 }
 
 function hideLoadingOverlay() {
   let overlay = document.getElementById("loadingOverlay");
   if (!overlay) return;
-
   overlay.classList.add("hidden");
 }
 
@@ -299,12 +302,44 @@ async function postToLeaderboard(wallet, streak, winRate) {
 }
 
 /*************************************************************
+  SORT HELPER (NEW)
+  
+  Use this function to sort the data array by the currentSortColumn
+  and currentSortOrder (asc/desc). This runs inside fetchAndRenderLeaderboard
+  after we get the data from the server.
+*************************************************************/
+function sortDataArray(data) {
+  if (!currentSortColumn) {
+    return data; // no sort => return as is
+  }
+
+  // sort in place
+  data.sort((a, b) => {
+    let valA = a[currentSortColumn] || 0;
+    let valB = b[currentSortColumn] || 0;
+
+    // parse numeric
+    valA = parseFloat(valA);
+    valB = parseFloat(valB);
+
+    if (valA < valB) return (currentSortOrder === "asc") ? -1 : 1;
+    if (valA > valB) return (currentSortOrder === "asc") ? 1 : -1;
+    return 0;
+  });
+
+  return data;
+}
+
+/*************************************************************
   GET => render entire leaderboard
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
     const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
-    const data = await res.json();
+    let data = await res.json();
+
+    // (NEW) We sort the data in memory
+    data = sortDataArray(data);
 
     leaderboardTable.innerHTML = "";
 
@@ -322,16 +357,15 @@ async function fetchAndRenderLeaderboard() {
       userDiv.classList.add("user");
       const link = document.createElement("a");
       link.href = `https://solscan.io/account/${rowData.wallet}`;
-      link.target= "_blank";
-      link.rel   = "noopener noreferrer";
+      link.target = "_blank";
+      link.rel    = "noopener noreferrer";
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
       const streakDiv = document.createElement("div");
       streakDiv.classList.add("streak");
-      streakDiv.innerText = rowData.streak; 
+      streakDiv.innerText = rowData.streak;
 
-      // If your server returns rowData.winRate, do:
       const winRateDiv = document.createElement("div");
       winRateDiv.classList.add("winrate");
       winRateDiv.innerText = rowData.winRate
@@ -349,6 +383,10 @@ async function fetchAndRenderLeaderboard() {
       }
       leaderboardTable.appendChild(divRow);
     });
+
+    // (NEW) Update the arrow icons/indicators
+    updateSortArrows();
+
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
   }
@@ -378,7 +416,7 @@ const closeIntroBtn = document.getElementById("closeIntroBtn");
 closeIntroBtn.addEventListener("click", () => {
   const introOverlay = document.getElementById("introOverlay");
   if (introOverlay) {
-    introOverlay.style.display = "none"; 
+    introOverlay.style.display = "none";
   }
 });
 
@@ -396,24 +434,20 @@ const tweetShareBtn     = document.getElementById("tweetShareBtn");
 openShareBtn.addEventListener("click", () => {
   console.log("openShareBtn clicked!");
   shareCanvasOverlay.classList.remove("hidden");
-  console.log("After remove!:", shareCanvasOverlay.className);
 
   const ctx = shareCanvas.getContext("2d");
   ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
 
   // load background
   const bg = new Image();
-  bg.src = "share.png"; // or your updated background 
+  bg.src = "share.png"; // or your updated background
   bg.onload = () => {
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
 
-    // Place the numeric portion 
     ctx.font = "bold 80px sans-serif";
     ctx.fillStyle = "#00ffa2";
-    ctx.textAlign = "center"; 
-    // e.g. center horizontally
+    ctx.textAlign = "center";
     const x = shareCanvas.width / 2;
-    // pick a Y 
     const y = 250;
 
     ctx.fillText(`${lastStreakForShare}`, x, y);
@@ -442,3 +476,53 @@ tweetShareBtn.addEventListener("click", () => {
   const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
   window.open(twitterUrl, "_blank");
 });
+
+/*************************************************************
+  (NEW) Sorting Implementation
+*************************************************************/
+function toggleSort(column) {
+  // If same column => flip order
+  if (currentSortColumn === column) {
+    currentSortOrder = (currentSortOrder === "asc") ? "desc" : "asc";
+  } else {
+    currentSortColumn = column;
+    currentSortOrder  = "desc";  // default
+  }
+  // re-fetch or re-sort
+  fetchAndRenderLeaderboard();
+}
+
+// Add event listeners for your headings
+sortByStreakEl.addEventListener("click", () => {
+  toggleSort("streak");
+});
+sortByWinEl.addEventListener("click", () => {
+  toggleSort("winRate");
+});
+
+/**
+ * Optionally show arrow icons or up/down text next to headings
+ */
+function updateSortArrows() {
+  // Clear out any old arrows
+  sortByStreakEl.textContent = "STREAK";
+  sortByWinEl.textContent    = "WIN%";
+
+  // If sorted by 'streak'
+  if (currentSortColumn === "streak") {
+    if (currentSortOrder === "asc") {
+      sortByStreakEl.textContent += " ↑";
+    } else {
+      sortByStreakEl.textContent += " ↓";
+    }
+  }
+
+  // If sorted by 'winRate'
+  if (currentSortColumn === "winRate") {
+    if (currentSortOrder === "asc") {
+      sortByWinEl.textContent += " ↑";
+    } else {
+      sortByWinEl.textContent += " ↓";
+    }
+  }
+}
