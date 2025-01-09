@@ -46,6 +46,17 @@ let pool;
     console.error("Error initializing DB:", err);
   }
 })();
+const bs58 = require("bs58"); // Include bs58 for Solana address validation
+
+// Function to validate Solana addresses
+function isValidSolanaAddress(addr) {
+  try {
+    const bytes = bs58.decode(addr);
+    return bytes.length === 32; // Solana public keys are always 32 bytes
+  } catch (e) {
+    return false;
+  }
+}
 
 // Basic logs
 app.use((req, res, next) => {
@@ -57,11 +68,13 @@ app.use((req, res, next) => {
 app.post("/leaderboard", async (req, res) => {
   try {
     const { wallet, streak, winRate } = req.body;
-    if (!wallet) {
-      return res.status(400).json({ error: "Missing wallet" });
+
+    // 1) Validate the wallet is a valid Solana address
+    if (!wallet || !isValidSolanaAddress(wallet)) {
+      return res.status(400).json({ error: "Invalid Solana wallet address." });
     }
 
-    // Insert or update => ON DUPLICATE KEY
+    // 2) Insert or update => ON DUPLICATE KEY
     const sql = `
       INSERT INTO leaderboard (wallet, streak, winRate)
       VALUES (?, ?, ?)
