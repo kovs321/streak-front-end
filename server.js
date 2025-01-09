@@ -50,12 +50,8 @@ const bs58 = require("bs58"); // Include bs58 for Solana address validation
 
 // Function to validate Solana addresses
 function isValidSolanaAddress(addr) {
-  try {
-    const bytes = bs58.decode(addr);
-    return bytes.length === 32; // Solana public keys are always 32 bytes
-  } catch (e) {
-    return false;
-  }
+  const base58Regex = /^[1-9A-HJ-NP-Za-km-z]+$/;
+  return addr.length >= 32 && addr.length <= 44 && base58Regex.test(addr);
 }
 
 // Basic logs
@@ -69,20 +65,19 @@ app.post("/leaderboard", async (req, res) => {
   try {
     const { wallet, streak, winRate } = req.body;
 
-    // 1) Validate the wallet is a valid Solana address
+    // Validate wallet address with the simplified approach
     if (!wallet || !isValidSolanaAddress(wallet)) {
-      console.error("Invalid Solana wallet address:", wallet);
+      console.error(`Invalid Solana wallet address: ${wallet}`);
       return res.status(400).json({ error: "Invalid Solana wallet address." });
     }
-    
 
-    // 2) Insert or update => ON DUPLICATE KEY
+    // Proceed with insert/upsert logic
     const sql = `
       INSERT INTO leaderboard (wallet, streak, winRate)
       VALUES (?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        streak   = VALUES(streak),
-        winRate  = VALUES(winRate),
+        streak = VALUES(streak),
+        winRate = VALUES(winRate),
         updated_at = CURRENT_TIMESTAMP
     `;
     await pool.execute(sql, [wallet, streak || 0, winRate || 0]);
@@ -94,6 +89,7 @@ app.post("/leaderboard", async (req, res) => {
     return res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // GET /leaderboard => returns [ { wallet, streak, winRate, updated_at }, ... ]
 app.get("/leaderboard", async (req, res) => {
