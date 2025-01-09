@@ -184,7 +184,7 @@ body {
   color: #eee;
 }
 .leaderboard-row:not(.heading):hover {
-  background-color: #223d6d;
+  background-color: #2c4f8a;
   transform: scale(1.01);
 }
 
@@ -454,7 +454,7 @@ body {
   width: 100vw; 
   height: 100vh;
   background: rgba(0, 0, 0, 0.6);
-  display: none;  /* hidden by default */
+   /* display: none; <-- remove this */
   align-items: center;
   justify-content: center;
   z-index: 9999;
