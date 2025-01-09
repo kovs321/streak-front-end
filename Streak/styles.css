@@ -481,6 +481,7 @@ body {
 
 /* Container for the "Download" + "Close" buttons */
 .share-buttons button {
+  flex-direction: row !important;
   width: 125px;
   height: 40px;
   border: none;
@@ -489,7 +490,6 @@ body {
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
-  flex-direction: row;
   text-transform: uppercase;
   cursor: pointer;
   display: flex;     /* if you want to center text + possible icons */
