@@ -178,12 +178,14 @@ searchBtn.addEventListener("click", async () => {
     lastWalletUsed     = wallet;
 
     // 3) Post to your DB (MySQL) — adjust URL if needed
-    const body = { wallet, streak: maxStreak, winRate };
+    const body = { wallet, streak: maxStreak || 0, winRate: winRate || 0 };
+    console.log("Posting to leaderboard:", body); // Add this to debug
     await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     });
+    
 
     // 4) Re-fetch the entire leaderboard
     await fetchAndRenderLeaderboard();
