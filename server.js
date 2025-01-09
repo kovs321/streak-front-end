@@ -1,93 +1,151 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql2/promise'); // <-- for async/await
+/*****************************************************************
+  server.js example using MySQL to store wallet, streak, winRate
+*****************************************************************/
+const express = require("express");
+const cors    = require("cors");
+const mysql   = require("mysql2/promise"); // note: use the promise variant
+require("dotenv").config(); // if using a .env file locally
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Create a MySQL connection pool
+// 1) Create MySQL pool
 let pool;
 
-/**
- * Initialize DB pool ONCE when the app starts.
- * We read the env vars and create the pool. 
- */
-async function initDB() {
+(async function initDB() {
   try {
     pool = await mysql.createPool({
-      host:     process.env.MYSQLHOST,      // e.g. 'mysql.railway.internal'
-      user:     process.env.MYSQLUSER,      // e.g. 'root'
-      password: process.env.MYSQLPASSWORD,  // your password from Railway
-      database: process.env.MYSQLDATABASE,  // e.g. 'railway'
-      port:     process.env.MYSQLPORT,      // 3306
-      // You can tweak connectionLimit, etc. if you like
+      host:     process.env.DB_HOST     || "mysql.railway.internal",
+      user:     process.env.DB_USER     || "root",
+      password: process.env.DB_PASSWORD || "some_password",
+      database: process.env.DB_NAME     || "railway",
+      port:     process.env.DB_PORT     || 3306,
+      waitForConnections: true,
+      connectionLimit: 5,
+      queueLimit: 0
     });
-    console.log("MySQL pool created.");
 
-    // Optional: test a simple query
-    await pool.execute('SELECT 1');
-    console.log("DB connected successfully.");
+    // CREATE TABLE IF NOT EXISTS ...
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS leaderboard (
+        wallet   VARCHAR(255) PRIMARY KEY,
+        streak   INT          DEFAULT 0,
+        winRate  FLOAT        DEFAULT 0,
+        updated_at DATETIME   DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await pool.execute(createTableSQL);
+    console.log("MySQL table 'leaderboard' is ready.");
+
   } catch (err) {
     console.error("Error initializing DB:", err);
   }
-}
+})();
 
-// Call initDB at startup
-initDB();
+// 2) Basic logs
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
-// ROUTE 1) POST /leaderboard
-// Insert or update a wallet’s streak & winRate in MySQL
-app.post('/leaderboard', async (req, res) => {
+/*****************************************************************
+  POST /leaderboard => upsert { wallet, streak, winRate }
+*****************************************************************/
+app.post("/leaderboard", async (req, res) => {
   try {
     const { wallet, streak, winRate } = req.body;
-
     if (!wallet) {
       return res.status(400).json({ error: "Missing wallet" });
     }
 
-    // Using MySQL's "INSERT … ON DUPLICATE KEY UPDATE" 
-    // (requires "wallet" to be the PRIMARY KEY or UNIQUE in your table)
+    // Insert or update => ON DUPLICATE KEY
     const sql = `
       INSERT INTO leaderboard (wallet, streak, winRate)
       VALUES (?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        streak  = VALUES(streak),
-        winRate = VALUES(winRate)
+        streak   = VALUES(streak),
+        winRate  = VALUES(winRate),
+        updated_at = CURRENT_TIMESTAMP
     `;
-
-    // Execute the query (pool must be initialized)
     await pool.execute(sql, [wallet, streak || 0, winRate || 0]);
 
-    console.log(`Upsert done for wallet: ${wallet}, streak: ${streak}, winRate: ${winRate}`);
     return res.json({ message: "Leaderboard updated", wallet, streak, winRate });
   } catch (err) {
-    console.error("POST /leaderboard error:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("DB insert/update error:", err);
+    return res.status(500).json({ error: "Database error" });
   }
 });
 
-// ROUTE 2) GET /leaderboard
-// Return top 50, sorted by streak DESC
-app.get('/leaderboard', async (req, res) => {
+/*****************************************************************
+  GET /leaderboard => returns [ { wallet, streak, winRate, rank }, ... ]
+*****************************************************************/
+app.get("/leaderboard", async (req, res) => {
   try {
-    const sql = `
-      SELECT wallet, streak, winRate
+    // 1) Grab the entire table, sorted by streak desc
+    const selectSQL = `
+      SELECT wallet, streak, winRate, updated_at
       FROM leaderboard
-      ORDER BY streak DESC
-      LIMIT 50
+      ORDER BY streak DESC, updated_at DESC
     `;
-    const [rows] = await pool.execute(sql);
-    return res.json(rows);
+    const [rows] = await pool.execute(selectSQL);
+
+    // 2) We can compute rank on the fly: row index + 1
+    //    (Because MySQL doesn't have an easy "RANK()" unless we do 8.0 window functions)
+    //    We'll just do it in JS for clarity.
+    const leaderboardWithRank = rows.map((r, i) => ({
+      ...r,
+      rank: i + 1
+    }));
+
+    return res.json(leaderboardWithRank);
   } catch (err) {
-    console.error("GET /leaderboard error:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("DB select error:", err);
+    return res.status(500).json({ error: "Database error" });
   }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000; 
+/*****************************************************************
+  (Optional) GET /leaderboard/:wallet => return that user’s rank
+*****************************************************************/
+app.get("/leaderboard/:wallet", async (req, res) => {
+  try {
+    const userWallet = req.params.wallet;
+    // 1) Get entire table
+    const selectSQL = `
+      SELECT wallet, streak, winRate, updated_at
+      FROM leaderboard
+      ORDER BY streak DESC, updated_at DESC
+    `;
+    const [rows] = await pool.execute(selectSQL);
+
+    // 2) Compute rank
+    let userEntry;
+    rows.forEach((r, i) => {
+      if (r.wallet === userWallet) {
+        userEntry = {
+          wallet: r.wallet,
+          streak: r.streak,
+          winRate: r.winRate,
+          rank: i + 1
+        };
+      }
+    });
+
+    if (!userEntry) {
+      return res.status(404).json({ error: "Wallet not found" });
+    }
+    return res.json(userEntry);
+  } catch (err) {
+    console.error("DB select error:", err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
+/*****************************************************************
+  Start server
+*****************************************************************/
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
