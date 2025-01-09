@@ -181,7 +181,7 @@ searchBtn.addEventListener("click", async () => {
 
     // 3) Post to your DB (MySQL) — adjust URL if needed
     const body = { wallet, streak: maxStreak, winRate };
-    await fetch("https://YOUR_SERVER_DOMAIN/leaderboard", {
+    await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
@@ -207,7 +207,7 @@ searchBtn.addEventListener("click", async () => {
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
-    const res = await fetch("https://YOUR_SERVER_DOMAIN/leaderboard");
+    const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
     let data = await res.json();
 
     // Sort if needed
