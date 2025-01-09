@@ -71,8 +71,10 @@ app.post("/leaderboard", async (req, res) => {
 
     // 1) Validate the wallet is a valid Solana address
     if (!wallet || !isValidSolanaAddress(wallet)) {
+      console.error("Invalid Solana wallet address:", wallet);
       return res.status(400).json({ error: "Invalid Solana wallet address." });
     }
+    
 
     // 2) Insert or update => ON DUPLICATE KEY
     const sql = `
