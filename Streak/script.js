@@ -1,6 +1,6 @@
 /*************************************************************
-  SINGLE “BUY→SELL” CYCLE CODE
-  (partial sells do NOT produce multiple wins)
+  script.js — Front-End Logic 
+  with sorting (Streak & Win%) and “Share My Streak” overlay
 *************************************************************/
 
 /** DOM references */
@@ -13,27 +13,28 @@ const gotoRankBtn       = document.getElementById("gotoRankBtn");
 // The numeric portion in <span class="myStreakValue">0</span>
 const streakNumEl       = document.querySelector(".myStreakValue");
 
-// (NEW) For sorting columns
-const sortByStreakEl    = document.getElementById("sortByStreak");  // <div id="sortByStreak" ...
-const sortByWinEl       = document.getElementById("sortByWin");     // <div id="sortByWin" ...
-
-/** SolTracker API key (visible in front-end) */
-const SOLTRACKER_API_KEY = "c9bae0d7-03b1-48a8-8347-c952d84534dc";
-
 /** 
- * We keep track of which column is currently sorted & whether ascending or descending.
- * e.g. currentSortColumn = "streak" or "winRate"
- *      currentSortOrder  = "asc" or "desc"
+ * Columns to sort by:
+ * We'll attach events to #sortByStreak, #sortByWin (DIVs or SPANs in your HTML)
  */
-let currentSortColumn   = null; 
+const sortByStreakEl    = document.getElementById("sortByStreak");
+const sortByWinEl       = document.getElementById("sortByWin");
+
+let currentSortColumn   = null;  // "streak" or "winRate"
 let currentSortOrder    = "desc";
 
 let lastWalletUsed      = null; 
-let lastStreakForShare  = 0; // used for "Share My Streak" overlay
+let lastStreakForShare  = 0;     // used for “Share My Streak” overlay
 
 /*************************************************************
-  1) Fetch trades from SolTracker
+  1) fetchWalletTrades => If you still call SolTracker from front-end 
+     (Not recommended if you want to hide the API key).
+     If you want your server to do it, remove this and call your 
+     server endpoint instead.
 *************************************************************/
+// If you plan to hide your key, remove or disable the direct fetch here 
+// and let your server handle SolTracker requests.
+const SOLTRACKER_API_KEY = "YOUR_SOLTRACKER_KEY_HERE"; 
 async function fetchWalletTrades(walletAddress) {
   const url = `https://data.solanatracker.io/wallet/${walletAddress}/trades`;
   const response = await fetch(url, {
@@ -47,7 +48,7 @@ async function fetchWalletTrades(walletAddress) {
 }
 
 /*************************************************************
-  2) Identify if token is SOL/WSOL
+  2) processTrades => parse & compute (same as your older logic)
 *************************************************************/
 function isSolMint(addr = "") {
   return (
@@ -55,11 +56,8 @@ function isSolMint(addr = "") {
     addr.includes("WSOL")
   );
 }
-
-/*************************************************************
-  3) parseTrade => "buy", "sell", or skip
-*************************************************************/
 function parseTrade(trade) {
+  // same parse logic
   const fromAddr = trade?.from?.address || "";
   const toAddr   = trade?.to?.address   || "";
   const fromAmt  = trade?.from?.amount  || 0;
@@ -69,12 +67,10 @@ function parseTrade(trade) {
   const fromIsSol = isSolMint(fromAddr);
   const toIsSol   = isSolMint(toAddr);
 
-  // skip if from->to is both SOL or both SPL
   if ((fromIsSol && toIsSol) || (!fromIsSol && !toIsSol)) {
     return { action: "skip" };
   }
 
-  // SOL => SPL => buy
   if (fromIsSol && !toIsSol) {
     return {
       action: "buy",
@@ -84,7 +80,6 @@ function parseTrade(trade) {
       time,
     };
   } else {
-    // SPL => SOL => sell
     return {
       action: "sell",
       tokenMint: fromAddr,
@@ -94,14 +89,9 @@ function parseTrade(trade) {
     };
   }
 }
-
-/*************************************************************
-  4) Data structure
-*************************************************************/
 function createLedger() {
   return {};
 }
-
 function ensureTokenObj(ledger, mint) {
   if (!ledger[mint]) {
     ledger[mint] = {
@@ -113,19 +103,11 @@ function ensureTokenObj(ledger, mint) {
   }
   return ledger[mint];
 }
-
-/*************************************************************
-  5) handleBuy
-*************************************************************/
 function handleBuy(ledger, mint, tokenAmt, costSol) {
   const obj = ensureTokenObj(ledger, mint);
   obj.netTokenHolding += tokenAmt;
   obj.totalBoughtSol  += costSol;
 }
-
-/*************************************************************
-  6) handleSell => finalize if netTokenHolding ~0
-*************************************************************/
 function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
   const obj = ensureTokenObj(ledger, mint);
   const amtToSell = Math.min(sellAmt, obj.netTokenHolding);
@@ -136,16 +118,11 @@ function handleSell(ledger, mint, sellAmt, proceedsSol, time) {
   if (obj.netTokenHolding < 0.0000001) {
     const netProfit = obj.totalProceedsSol - obj.totalBoughtSol;
     obj.completedTrades.push({ closeTime: time, netProfit });
-
     obj.netTokenHolding  = 0;
     obj.totalBoughtSol   = 0;
     obj.totalProceedsSol = 0;
   }
 }
-
-/*************************************************************
-  7) processTradesByFullCycles => { maxStreak, winRate, ...}
-*************************************************************/
 function processTradesByFullCycles(rawTrades) {
   rawTrades.sort((a, b) => a.time - b.time);
 
@@ -153,25 +130,17 @@ function processTradesByFullCycles(rawTrades) {
   for (const t of rawTrades) {
     const info = parseTrade(t);
     if (info.action === "skip") continue;
-    if (info.action === "buy") {
-      handleBuy(ledger, info.tokenMint, info.tokenAmt, info.costSol);
-    } else if (info.action === "sell") {
-      handleSell(ledger, info.tokenMint, info.sellAmt, info.proceedsSol, info.time);
-    }
+    if (info.action === "buy")  handleBuy(ledger, info.tokenMint, info.tokenAmt, info.costSol);
+    if (info.action === "sell") handleSell(ledger, info.tokenMint, info.sellAmt, info.proceedsSol, info.time);
   }
 
-  // gather all completed
   let allCompleted = [];
   for (const mint in ledger) {
     allCompleted.push(...ledger[mint].completedTrades);
   }
   allCompleted.sort((a, b) => a.closeTime - b.closeTime);
 
-  let current = 0;
-  let maxStreak = 0;
-  let totalTrades = 0;
-  let totalWins = 0;
-
+  let current = 0, maxStreak = 0, totalTrades = 0, totalWins = 0;
   for (const c of allCompleted) {
     totalTrades++;
     if (c.netProfit > 0) {
@@ -182,163 +151,66 @@ function processTradesByFullCycles(rawTrades) {
       current = 0;
     }
   }
-
   let winRate = 0;
   if (totalTrades > 0) {
     winRate = (totalWins / totalTrades) * 100;
   }
-
-  return {
-    maxStreak,
-    allCompleted,
-    winRate,
-    totalTrades,
-    totalWins
-  };
+  return { maxStreak, winRate, allCompleted, totalTrades, totalWins };
 }
 
 /*************************************************************
-  8) Show final row (just for immediate user feedback)
-*************************************************************/
-function showSingleRow(wallet, bestStreak) {
-  leaderboardTable.innerHTML = "";
-
-  const row = document.createElement("div");
-  row.classList.add("leaderboard-row");
-
-  const rankDiv = document.createElement("div");
-  rankDiv.classList.add("rank");
-  rankDiv.innerText = "?";
-
-  const userDiv = document.createElement("div");
-  userDiv.classList.add("user");
-
-  const link = document.createElement("a");
-  link.href = `https://solscan.io/account/${wallet}`;
-  link.target = "_blank";
-  link.rel    = "noopener noreferrer";
-  link.innerText = wallet;
-  userDiv.appendChild(link);
-
-  const streakDiv = document.createElement("div");
-  streakDiv.classList.add("streak");
-  streakDiv.innerText = bestStreak;
-
-  row.appendChild(rankDiv);
-  row.appendChild(userDiv);
-  row.appendChild(streakDiv);
-  leaderboardTable.appendChild(row);
-}
-
-/*************************************************************
-  9) MAIN: on search click => fetch, compute, post, fetch
+  3) searchBtn => main logic
 *************************************************************/
 searchBtn.addEventListener("click", async () => {
   const wallet = walletInput.value.trim();
   if (!wallet) {
-    alert("Please enter a valid wallet!");
+    alert("Please enter a valid wallet address!");
     return;
   }
 
-  // 1) Show overlay
   showLoadingOverlay();
 
-  let maxStreak = 0;
   try {
+    // 1) If you’re calling *directly* to SolTracker:
     const rawTrades = await fetchWalletTrades(wallet);
-    const { maxStreak: computedStreak, winRate } = processTradesByFullCycles(rawTrades);
 
-    maxStreak           = computedStreak;
-    lastWalletUsed      = wallet;
-    lastStreakForShare  = maxStreak; 
+    // 2) Process
+    const { maxStreak, winRate } = processTradesByFullCycles(rawTrades);
+    lastStreakForShare = maxStreak; 
+    lastWalletUsed     = wallet;
 
-    // 2) Post to DB & fetch entire leaderboard
-    await postToLeaderboard(wallet, maxStreak, winRate);
+    // 3) Post to your DB (MySQL) — adjust URL if needed
+    const body = { wallet, streak: maxStreak, winRate };
+    await fetch("https://YOUR_SERVER_DOMAIN/leaderboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    // 4) Re-fetch the entire leaderboard
     await fetchAndRenderLeaderboard();
 
-    // 3) Update the numeric part => green
+    // 5) Update the streak in the H1
     streakNumEl.textContent = maxStreak;
-    streakNumEl.style.color = "#00ffa2";
+    streakNumEl.style.color = "#00ffa2"; // green highlight
 
-  } catch (error) {
-    console.error("Could not fetch/parse trades:", error);
-    alert("Error fetching trades or computing streak!");
+  } catch (err) {
+    console.error("Error in search flow:", err);
+    alert("Could not fetch or compute trades!");
   } finally {
     hideLoadingOverlay();
   }
 });
 
 /*************************************************************
-  OVERLAY LOGIC
-*************************************************************/
-function showLoadingOverlay() {
-  let overlay = document.getElementById("loadingOverlay");
-  if (!overlay) return;
-  overlay.classList.remove("hidden");
-}
-
-function hideLoadingOverlay() {
-  let overlay = document.getElementById("loadingOverlay");
-  if (!overlay) return;
-  overlay.classList.add("hidden");
-}
-
-/*************************************************************
-  POST => your deployed server
-*************************************************************/
-async function postToLeaderboard(wallet, streak, winRate) {
-  try {
-    const body = { wallet, streak, winRate };
-    const response = await fetch("https://streak-front-end-production.up.railway.app/leaderboard", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    console.log("Server POST response:", data);
-  } catch (err) {
-    console.error("Failed to POST leaderboard data:", err);
-  }
-}
-
-/*************************************************************
-  SORT HELPER (NEW)
-  
-  Use this function to sort the data array by the currentSortColumn
-  and currentSortOrder (asc/desc). This runs inside fetchAndRenderLeaderboard
-  after we get the data from the server.
-*************************************************************/
-function sortDataArray(data) {
-  if (!currentSortColumn) {
-    return data; // no sort => return as is
-  }
-
-  // sort in place
-  data.sort((a, b) => {
-    let valA = a[currentSortColumn] || 0;
-    let valB = b[currentSortColumn] || 0;
-
-    // parse numeric
-    valA = parseFloat(valA);
-    valB = parseFloat(valB);
-
-    if (valA < valB) return (currentSortOrder === "asc") ? -1 : 1;
-    if (valA > valB) return (currentSortOrder === "asc") ? 1 : -1;
-    return 0;
-  });
-
-  return data;
-}
-
-/*************************************************************
-  GET => render entire leaderboard
+  4) fetchAndRenderLeaderboard => GET from your MySQL server
 *************************************************************/
 async function fetchAndRenderLeaderboard() {
   try {
-    const res = await fetch("https://streak-front-end-production.up.railway.app/leaderboard");
+    const res = await fetch("https://YOUR_SERVER_DOMAIN/leaderboard");
     let data = await res.json();
 
-    // (NEW) We sort the data in memory
+    // Sort if needed
     data = sortDataArray(data);
 
     leaderboardTable.innerHTML = "";
@@ -357,8 +229,8 @@ async function fetchAndRenderLeaderboard() {
       userDiv.classList.add("user");
       const link = document.createElement("a");
       link.href = `https://solscan.io/account/${rowData.wallet}`;
-      link.target = "_blank";
-      link.rel    = "noopener noreferrer";
+      link.target= "_blank";
+      link.rel   = "noopener noreferrer";
       link.innerText = rowData.wallet;
       userDiv.appendChild(link);
 
@@ -384,8 +256,7 @@ async function fetchAndRenderLeaderboard() {
       leaderboardTable.appendChild(divRow);
     });
 
-    // (NEW) Update the arrow icons/indicators
-    updateSortArrows();
+    updateSortArrows(); // update arrow icons
 
   } catch (err) {
     console.error("Error fetching leaderboard:", err);
@@ -393,35 +264,78 @@ async function fetchAndRenderLeaderboard() {
 }
 
 /*************************************************************
-  SCROLL TO CURRENT USER’S RANK
+  5) (Optional) Sorting
+*************************************************************/
+
+function sortDataArray(data) {
+  if (!currentSortColumn) return data;
+  data.sort((a, b) => {
+    let valA = parseFloat(a[currentSortColumn] || 0);
+    let valB = parseFloat(b[currentSortColumn] || 0);
+    if (valA < valB) return (currentSortOrder === "asc") ? -1 : 1;
+    if (valA > valB) return (currentSortOrder === "asc") ? 1 : -1;
+    return 0;
+  });
+  return data;
+}
+function toggleSort(column) {
+  if (currentSortColumn === column) {
+    currentSortOrder = (currentSortOrder === "asc") ? "desc" : "asc";
+  } else {
+    currentSortColumn = column;
+    currentSortOrder  = "desc";
+  }
+  fetchAndRenderLeaderboard();
+}
+sortByStreakEl.addEventListener("click", () => toggleSort("streak"));
+sortByWinEl.addEventListener("click", () => toggleSort("winRate"));
+
+function updateSortArrows() {
+  sortByStreakEl.textContent = "STREAK";
+  sortByWinEl.textContent    = "WIN%";
+  if (currentSortColumn === "streak") {
+    if (currentSortOrder === "asc") {
+      sortByStreakEl.textContent += " ↑";
+    } else {
+      sortByStreakEl.textContent += " ↓";
+    }
+  }
+  if (currentSortColumn === "winRate") {
+    if (currentSortOrder === "asc") {
+      sortByWinEl.textContent += " ↑";
+    } else {
+      sortByWinEl.textContent += " ↓";
+    }
+  }
+}
+
+/*************************************************************
+  6) “Go to My Rank” button
 *************************************************************/
 gotoRankBtn.addEventListener("click", () => {
   const userRow = document.getElementById("currentUserRow");
   if (userRow) {
     userRow.scrollIntoView({ behavior: "smooth", block: "center" });
   } else {
-    alert("Your rank isn't found yet. Please search first!");
+    alert("Your rank isn't found. Please search first!");
   }
 });
 
 /*************************************************************
-  (NEW) Load leaderboard on page load
+  7) Overlays: intro + share
 *************************************************************/
 document.addEventListener("DOMContentLoaded", () => {
+  // on page load => fetch leaderboard
   fetchAndRenderLeaderboard();
 });
-
-// Hide the intro overlay when "closeIntroBtn" is clicked
 const closeIntroBtn = document.getElementById("closeIntroBtn");
 closeIntroBtn.addEventListener("click", () => {
   const introOverlay = document.getElementById("introOverlay");
-  if (introOverlay) {
-    introOverlay.style.display = "none";
-  }
+  if (introOverlay) introOverlay.style.display = "none";
 });
 
 /*************************************************************
-  SHARE MY STREAK Overlay
+  8) Share My Streak Overlay
 *************************************************************/
 const openShareBtn      = document.getElementById("openShareBtn");
 const shareCanvasOverlay= document.getElementById("shareCanvasOverlay");
@@ -430,36 +344,27 @@ const closeShareBtn     = document.getElementById("closeShareBtn");
 const downloadCanvasBtn = document.getElementById("downloadCanvasBtn");
 const tweetShareBtn     = document.getElementById("tweetShareBtn");
 
-// 1) "Open Share" => show overlay, draw canvas
 openShareBtn.addEventListener("click", () => {
-  console.log("openShareBtn clicked!");
   shareCanvasOverlay.classList.remove("hidden");
-
+  // draw the canvas
   const ctx = shareCanvas.getContext("2d");
   ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);
 
-  // load background
   const bg = new Image();
-  bg.src = "share.png"; // or your updated background
+  bg.src = "share.png"; // or your background image
   bg.onload = () => {
     ctx.drawImage(bg, 0, 0, shareCanvas.width, shareCanvas.height);
-
     ctx.font = "bold 80px sans-serif";
     ctx.fillStyle = "#00ffa2";
     ctx.textAlign = "center";
     const x = shareCanvas.width / 2;
     const y = 250;
-
     ctx.fillText(`${lastStreakForShare}`, x, y);
   };
 });
-
-// 2) "Close" => hide
 closeShareBtn.addEventListener("click", () => {
   shareCanvasOverlay.classList.add("hidden");
 });
-
-// 3) "Download" => save
 downloadCanvasBtn.addEventListener("click", () => {
   const dataURL = shareCanvas.toDataURL("image/png");
   const link = document.createElement("a");
@@ -467,62 +372,22 @@ downloadCanvasBtn.addEventListener("click", () => {
   link.href = dataURL;
   link.click();
 });
-
-// 4) "Tweet This!"
 tweetShareBtn.addEventListener("click", () => {
-  const tweetText = encodeURIComponent(
-    `I just reached a streak of ${lastStreakForShare}!`
-  );
+  const tweetText  = encodeURIComponent(`I just reached a streak of ${lastStreakForShare}!`);
   const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
   window.open(twitterUrl, "_blank");
 });
 
 /*************************************************************
-  (NEW) Sorting Implementation
+  Loading Overlay
 *************************************************************/
-function toggleSort(column) {
-  // If same column => flip order
-  if (currentSortColumn === column) {
-    currentSortOrder = (currentSortOrder === "asc") ? "desc" : "asc";
-  } else {
-    currentSortColumn = column;
-    currentSortOrder  = "desc";  // default
-  }
-  // re-fetch or re-sort
-  fetchAndRenderLeaderboard();
+function showLoadingOverlay() {
+  const overlay = document.getElementById("loadingOverlay");
+  if (!overlay) return;
+  overlay.classList.remove("hidden");
 }
-
-// Add event listeners for your headings
-sortByStreakEl.addEventListener("click", () => {
-  toggleSort("streak");
-});
-sortByWinEl.addEventListener("click", () => {
-  toggleSort("winRate");
-});
-
-/**
- * Optionally show arrow icons or up/down text next to headings
- */
-function updateSortArrows() {
-  // Clear out any old arrows
-  sortByStreakEl.textContent = "STREAK";
-  sortByWinEl.textContent    = "WIN%";
-
-  // If sorted by 'streak'
-  if (currentSortColumn === "streak") {
-    if (currentSortOrder === "asc") {
-      sortByStreakEl.textContent += " ↑";
-    } else {
-      sortByStreakEl.textContent += " ↓";
-    }
-  }
-
-  // If sorted by 'winRate'
-  if (currentSortColumn === "winRate") {
-    if (currentSortOrder === "asc") {
-      sortByWinEl.textContent += " ↑";
-    } else {
-      sortByWinEl.textContent += " ↓";
-    }
-  }
+function hideLoadingOverlay() {
+  const overlay = document.getElementById("loadingOverlay");
+  if (!overlay) return;
+  overlay.classList.add("hidden");
 }
