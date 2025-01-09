@@ -2,32 +2,33 @@
   server.js example using MySQL to store wallet, streak, winRate
 *****************************************************************/
 const express = require("express");
-const cors    = require("cors");
-const mysql   = require("mysql2/promise"); // use the promise-based version
+const cors = require("cors");
+const mysql = require("mysql2/promise");
 require("dotenv").config(); // if using a .env file locally
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1) Access your environment variables
-//    (But if you want a direct SolTracker fetch here, you'd also store & use SOLTRACKER_API_KEY)
+// Dynamic import for node-fetch
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+// Access your environment variables
 const SOLTRACKER_API_KEY = process.env.SOLTRACKER_API_KEY || "YOUR_FALLBACK_KEY";
 
-// 2) Create MySQL pool
+// Create MySQL pool
 let pool;
 (async function initDB() {
   try {
     pool = await mysql.createPool({
-      host:     process.env.DB_HOST     || "mysql.railway.internal",
-      user:     process.env.DB_USER     || "root",
+      host: process.env.DB_HOST || "mysql.railway.internal",
+      user: process.env.DB_USER || "root",
       password: process.env.DB_PASSWORD || "some_password",
-      database: process.env.DB_NAME     || "railway",
-      port:     process.env.DB_PORT     || 3306,
-
+      database: process.env.DB_NAME || "railway",
+      port: process.env.DB_PORT || 3306,
       waitForConnections: true,
-      connectionLimit: 5, // or how many you want
-      queueLimit: 0
+      connectionLimit: 5,
+      queueLimit: 0,
     });
 
     // CREATE TABLE IF NOT EXISTS ...
@@ -41,21 +42,18 @@ let pool;
     `;
     await pool.execute(createTableSQL);
     console.log("MySQL table 'leaderboard' is ready.");
-
   } catch (err) {
     console.error("Error initializing DB:", err);
   }
 })();
 
-// 3) Basic logs
+// Basic logs
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
 
-/*****************************************************************
-  POST /leaderboard => upsert { wallet, streak, winRate }
-*****************************************************************/
+// POST /leaderboard => upsert { wallet, streak, winRate }
 app.post("/leaderboard", async (req, res) => {
   try {
     const { wallet, streak, winRate } = req.body;
@@ -82,12 +80,9 @@ app.post("/leaderboard", async (req, res) => {
   }
 });
 
-/*****************************************************************
-  GET /leaderboard => returns [ { wallet, streak, winRate, updated_at }, ... ]
-*****************************************************************/
+// GET /leaderboard => returns [ { wallet, streak, winRate, updated_at }, ... ]
 app.get("/leaderboard", async (req, res) => {
   try {
-    // 1) Grab the entire table, sorted by streak desc
     const selectSQL = `
       SELECT wallet, streak, winRate, updated_at
       FROM leaderboard
@@ -96,8 +91,6 @@ app.get("/leaderboard", async (req, res) => {
     `;
     const [rows] = await pool.execute(selectSQL);
 
-    // Optional: If you want to add rank on the server side:
-    //   rows.forEach((r, i) => { r.rank = i+1; });
     return res.json(rows);
   } catch (err) {
     console.error("DB select error:", err);
@@ -105,12 +98,7 @@ app.get("/leaderboard", async (req, res) => {
   }
 });
 
-/*****************************************************************
-  (Optional) If you want an endpoint that calls SolTracker from server
-  GET /api/trades?wallet=...
-*****************************************************************/
-// If you want to hide your SolTracker key:
-const fetch = require("node-fetch"); 
+// Optional: GET /api/trades
 app.get("/api/trades", async (req, res) => {
   try {
     const walletAddress = req.query.wallet;
@@ -133,9 +121,7 @@ app.get("/api/trades", async (req, res) => {
   }
 });
 
-/*****************************************************************
-  Start
-*****************************************************************/
+// Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
