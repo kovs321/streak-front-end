@@ -479,28 +479,37 @@ body {
   border: 2px solid #444; /* optional to see the canvas boundary */
 }
 
-/* Container for the "Download" + "Close" buttons */
+/* Parent container for the 3 buttons */
+.share-buttons {
+  display: flex;          /* enable flex layout */
+  flex-direction: row;    /* horizontal alignment */
+  gap: 1rem;              /* spacing between buttons */
+  margin-top: 1rem;       /* optional top margin */
+  justify-content: center; /* center them horizontally */
+  align-items: center;     /* center them vertically */
+}
+
+/* The individual buttons */
 .share-buttons button {
-  flex-direction: row !important;
   width: 125px;
   height: 40px;
   border: none;
   border-radius: 4px;
-  background-color: #4a88f2; /* same main color */
+  background-color: #4a88f2; /* main color */
   color: #ffffff;
   font-size: 1rem;
   font-weight: bold;
   text-transform: uppercase;
   cursor: pointer;
-  display: flex;     /* if you want to center text + possible icons */
-  align-items: center;
+  display: flex;       /* so we can easily center text/icon inside the button */
+  align-items: center; 
   justify-content: center;
   transition: transform 0.2s ease, background-color 0.2s ease;
-  margin: 1rem;  
-  gap: 1rem; /* optional spacing between buttons */
 }
+
+/* Hover state */
 .share-buttons button:hover {
-  background-color: #7baaf8; /* same hover color as the site */
+  background-color: #7baaf8;
   transform: scale(1.02);
 }
 
