@@ -396,6 +396,7 @@ const tweetShareBtn     = document.getElementById("tweetShareBtn");
 openShareBtn.addEventListener("click", () => {
   console.log("openShareBtn clicked!");
   shareCanvasOverlay.classList.remove("hidden");
+  console.log("After remove:", shareCanvasOverlay.className);
 
   const ctx = shareCanvas.getContext("2d");
   ctx.clearRect(0, 0, shareCanvas.width, shareCanvas.height);

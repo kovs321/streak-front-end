@@ -457,7 +457,7 @@ body {
   display: none;  /* hidden by default */
   align-items: center;
   justify-content: center;
-  z-index: 999999 !important;
+  z-index: 9999;
 }
 
 /* The box wrapping our canvas & buttons */
