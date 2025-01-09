@@ -545,3 +545,17 @@ body {
   background-color: #7baaf8;
   transform: scale(1.02);
 }
+
+
+
+/* Make clickable headings appear as links or have a hover underline */
+.sort-heading {
+  cursor: pointer;
+  text-decoration: underline;
+  /* perhaps: color: #ab9ff2; if you want special color */
+}
+
+.sort-heading:hover {
+  text-decoration: none; /* or you can invert the style on hover */
+  color: #7baaf8; /* some hover color */
+}
