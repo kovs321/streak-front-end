@@ -16,8 +16,9 @@ body {
   color: #eeeeee;
   text-align: center;
   margin: 0;
-  font-family: 'Atma', serif;
+  font-family: "League Spartan", serif; /* Replace Atma with League Spartan */
 }
+
 
 /* Header */
 .header {
