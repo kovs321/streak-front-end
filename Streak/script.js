@@ -373,7 +373,7 @@ downloadCanvasBtn.addEventListener("click", () => {
   link.click();
 });
 tweetShareBtn.addEventListener("click", () => {
-  const tweetText  = encodeURIComponent(`I just reached a streak of ${lastStreakForShare}!`);
+  const tweetText  = encodeURIComponent(`I just reached a streak of ${lastStreakForShare}! how high is your streak? @streakdotwtf`);
   const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
   window.open(twitterUrl, "_blank");
 });
